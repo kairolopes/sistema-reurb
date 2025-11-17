@@ -1,12 +1,13 @@
-/* Este é o conteúdo que você deve colocar no novo arquivo index.css */
+/* IMPORT TEM QUE SER A PRIMEIRA LINHA */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+/* Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Opcional: Adiciona a fonte Inter que você estava usando */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-/* Opcional: Define a fonte Inter como padrão para todo o corpo */
+/* Fonte padrão */
 body { 
     font-family: 'Inter', sans-serif; 
 }
+
