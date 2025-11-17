@@ -247,93 +247,98 @@ const App = () => {
   // ======================================================= //
   // ================== LOGIN SCREEN ======================= //
   // ======================================================= //
+const LoginScreen = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const LoginScreen = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [registerMode, setRegisterMode] = useState(false);
+  const submit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setMessage("");
 
-    const submit = async (e) => {
-      e.preventDefault();
-      setError(null);
-      setMessage("");
-
-      setLoading(true);
-      try {
-        if (registerMode) {
-          await createUserWithEmailAndPassword(auth, email, password);
-          setMessage("Conta criada! Entrando...");
-        } else {
-          await signInWithEmailAndPassword(auth, email, password);
-        }
-      } catch (err) {
-        setError("Erro ao acessar. Verifique e-mail e senha.");
-      }
-      setLoading(false);
-    };
-
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-gray-200">
-          <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
-            {registerMode ? "Criar Conta" : "Acesso ao Sistema REURB"}
-          </h1>
-
-          {error && (
-            <p className="bg-red-100 p-3 text-red-700 rounded-lg text-sm mb-3">
-              {error}
-            </p>
-          )}
-
-          {message && (
-            <p className="bg-sky-100 p-3 text-sky-700 rounded-lg text-sm mb-3">
-              {message}
-            </p>
-          )}
-
-          <form className="space-y-4" onSubmit={submit}>
-            <InputField
-              label="E-mail"
-              name="email"
-              required
-              type="email"
-              value={email}
-              placeholder="seu.email@exemplo.com"
-              onChange={(e) => setEmail(e.target.value)}
-            />
-
-            <InputField
-              label="Senha"
-              name="password"
-              required
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-sky-600 text-white py-3 rounded-xl font-semibold hover:bg-sky-700 transition shadow-md"
-            >
-              {loading ? "Aguarde..." : registerMode ? "Cadastrar" : "Entrar"}
-            </button>
-          </form>
-
-          <button
-            onClick={() => setRegisterMode(!registerMode)}
-            className="text-sm text-sky-600 mt-4 w-full text-center hover:text-sky-800"
-          >
-            {registerMode
-              ? "Já tem conta? Fazer login"
-              : "Não tem conta? Criar agora"}
-          </button>
-        </div>
-      </div>
-    );
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      setError("Erro ao acessar. Verifique e-mail e senha.");
+    }
+    setLoading(false);
   };
 
+  // Função para recuperação de senha
+  const handleForgotPassword = () => {
+    if (!email) {
+      setError("Informe seu e-mail para recuperar a senha.");
+      return;
+    }
+    // Página de recuperação do Firebase Auth
+    const resetUrl = `https://www.firebase.com/account/#/login?email=${encodeURIComponent(email)}`;
+    window.open(resetUrl, "_blank");
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+      <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-gray-200">
+        <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
+          Acesso ao Sistema REURB
+        </h1>
+
+        {error && (
+          <p className="bg-red-100 p-3 text-red-700 rounded-lg text-sm mb-3">
+            {error}
+          </p>
+        )}
+
+        {message && (
+          <p className="bg-sky-100 p-3 text-sky-700 rounded-lg text-sm mb-3">
+            {message}
+          </p>
+        )}
+
+        <form className="space-y-4" onSubmit={submit}>
+          <InputField
+            label="E-mail"
+            name="email"
+            required
+            type="email"
+            value={email}
+            placeholder="seu.email@exemplo.com"
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <InputField
+            label="Senha"
+            name="password"
+            required
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-sky-600 text-white py-3 rounded-xl font-semibold hover:bg-sky-700 transition shadow-md"
+          >
+            {loading ? "Aguarde..." : "Entrar"}
+          </button>
+        </form>
+
+        {/* Esqueci a senha */}
+        <button
+          onClick={handleForgotPassword}
+          className="text-sm text-sky-600 mt-4 w-full text-center hover:text-sky-800"
+        >
+          Esqueci minha senha
+        </button>
+      </div>
+    </div>
+  );
+};
+
+  
   // ============================================================== //
   // ===================== RENDER PRINCIPAL ======================= //
   // ============================================================== //
@@ -375,3 +380,4 @@ const App = () => {
 };
 
 export default App;
+
