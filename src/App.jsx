@@ -24,7 +24,6 @@ import {
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   signOut,
 } from "firebase/auth";
@@ -49,9 +48,6 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ============================
-  // ACOMPANHA LOGIN
-  // ============================
   useEffect(() => {
     return onAuthStateChanged(auth, (usr) => {
       setUser(usr);
@@ -152,9 +148,74 @@ const App = () => {
   };
 
   // ============================
-  // LAYOUT COM SIDEBAR
+  // LAYOUT
   // ============================
   const Layout = ({ children }) => (
-    <div className="flex">
+    <div className="flex min-h-screen">
       {/* SIDEBAR */}
-      <aside className="w-
+      <aside className="w-64 bg-white shadow-xl border-r p-5 flex flex-col justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-sky-800 mb-6 flex items-center gap-2">
+            <Building size={22} /> Sistema REURB
+          </h2>
+
+          <nav className="flex flex-col gap-3">
+            <NavLink to="/" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
+              <Home size={18} /> Dashboard
+            </NavLink>
+
+            <NavLink to="/novo" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
+              <Plus size={18} /> Novo Cadastro
+            </NavLink>
+
+            <NavLink to="/consultar" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
+              <Search size={18} /> Consultar
+            </NavLink>
+
+            <NavLink to="/relatorios" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
+              <FileText size={18} /> Relatórios
+            </NavLink>
+
+            <NavLink to="/tickets" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
+              <Ticket size={18} /> Tickets
+            </NavLink>
+
+            <NavLink to="/config" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
+              <Settings size={18} /> Configurações
+            </NavLink>
+          </nav>
+        </div>
+
+        <button
+          onClick={() => signOut(auth)}
+          className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 text-red-600"
+        >
+          <LogOut size={18} /> Sair
+        </button>
+      </aside>
+
+      {/* CONTEÚDO */}
+      <main className="flex-1 bg-gray-50 p-8">{children}</main>
+    </div>
+  );
+
+  if (loading) return <p>Carregando...</p>;
+  if (!user) return <LoginScreen />;
+
+  return (
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/novo" element={<NovoCadastro />} />
+          <Route path="/consultar" element={<Consultar />} />
+          <Route path="/relatorios" element={<Relatorios />} />
+          <Route path="/tickets" element={<Tickets />} />
+          <Route path="/config" element={<Config />} />
+        </Routes>
+      </Layout>
+    </Router>
+  );
+};
+
+export default App;
