@@ -15,13 +15,13 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'reurb-system-default
 // ====================================================================
 // PASSO CRÍTICO: SUA CONFIGURAÇÃO firebaseConfig REAL, INSERIDA AQUI.
 const firebaseConfig = { 
-  apiKey: "AIzaSyBxrm1blzdcaGJ8YvoUlTS5hSVP900S0AH4", 
+  apiKey: "AIzaSyBxrh1bZu6cBaGj8YoUJtS5h5VP00SoAh4", 
   authDomain: "sistema-reurb.firebaseapp.com",
   projectId: "sistema-reurb",
   storageBucket: "sistema-reurb.firebasestorage.app",
   messagingSenderId: "444345727490",
   appId: "1:444345727490:web:5d9e6dba923781ba91451b",
-  measurementId: "G-MY6REMMEJV"
+  measurementId: "G-MY6RMEMNJV"
 }; 
 // ====================================================================
 
@@ -1096,5 +1096,6 @@ const App = () => {
     </div>
   );
 };
+
 
 export default App;
