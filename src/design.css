@@ -1,0 +1,104 @@
+/* ==== BASE RESET ==== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+input, button, select { font-family: inherit; }
+
+/* ==== COLORS ==== */
+.bg-gray-50   { background-color: #f9fafb; }
+.bg-gray-100  { background-color: #f3f4f6; }
+.bg-white     { background-color: #ffffff; }
+.bg-red-100   { background-color: #fee2e2; }
+.bg-sky-100   { background-color: #e0f2fe; }
+.bg-sky-600   { background-color: #0284c7; }
+.bg-sky-700   { background-color: #0369a1; }
+.bg-red-500   { background-color: #ef4444; }
+.bg-red-600   { background-color: #dc2626; }
+
+/* ==== TEXT ==== */
+.text-gray-600 { color: #4b5563; }
+.text-gray-700 { color: #374151; }
+.text-sky-600  { color: #0284c7; }
+.text-sky-700  { color: #0369a1; }
+.text-sky-800  { color: #075985; }
+.text-red-700  { color: #b91c1c; }
+
+/* ==== TYPO ==== */
+.text-sm   { font-size: .875rem; }
+.text-xl   { font-size: 1.25rem; }
+.text-2xl  { font-size: 1.5rem; }
+.text-3xl  { font-size: 1.875rem; }
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+
+/* ==== LAYOUT ==== */
+.min-h-screen { min-height: 100vh; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.mt-4 { margin-top: 1rem; }
+.mt-6 { margin-top: 1.5rem; }
+.mb-1 { margin-bottom: .25rem; }
+.mb-3 { margin-bottom: .75rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.p-2 { padding: .5rem; }
+.p-3 { padding: .75rem; }
+.p-6 { padding: 1.5rem; }
+.p-8 { padding: 2rem; }
+.p-10 { padding: 2.5rem; }
+
+/* ==== WIDTH ==== */
+.w-full { width: 100%; }
+.max-w-md { max-width: 28rem; }
+.max-w-4xl { max-width: 56rem; }
+
+/* ==== FLEX ==== */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.flex-col { flex-direction: column; }
+
+/* ==== BORDER & RADIUS ==== */
+.rounded-lg { border-radius: .5rem; }
+.rounded-xl { border-radius: .75rem; }
+.rounded-2xl { border-radius: 1rem; }
+.rounded-3xl { border-radius: 1.5rem; }
+
+.border         { border-width: 1px; }
+.border-b       { border-bottom-width: 1px; }
+.border-gray-300 { border-color: #d1d5db; }
+.border-gray-200 { border-color: #e5e7eb; }
+
+/* ==== BUTTON ==== */
+button:hover { filter: brightness(0.92); }
+button:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ==== SHADOW ==== */
+.shadow-md  { box-shadow: 0 4px 6px rgba(0,0,0,.1); }
+.shadow-xl  { box-shadow: 0 10px 15px rgba(0,0,0,.1); }
+.shadow-2xl { box-shadow: 0 25px 50px rgba(0,0,0,.25); }
+
+/* ==== INPUT ==== */
+input, select {
+  border-radius: .5rem;
+  border: 1px solid #d1d5db;
+  padding: .5rem;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 1px #0ea5e9;
+}
+
+/* ==== ANIMATION SPIN ==== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.animate-spin { animation: spin 1s linear infinite; }
+
+/* ==== CUSTOM ==== */
+.text-center { text-align: center; }
+.transition { transition: all .2s; }
+
+/* Flex spacing */
+.space-y-4 > * + * { margin-top: 1rem; }
+.space-x-2 > * + * { margin-left: .5rem; }
