@@ -1,6 +1,6 @@
 import { Home, FilePlus, Search, FileText, Ticket, Settings, LogOut, Building } from "lucide-react";
 
-const Sidebar = ({ page, setPage }) => {
+const Sidebar = ({ page, setPage, logout }) => {
   const menu = [
     { id: "dashboard", label: "Dashboard", icon: <Home /> },
     { id: "novo", label: "Novo Cadastro", icon: <FilePlus /> },
@@ -30,7 +30,7 @@ const Sidebar = ({ page, setPage }) => {
       </nav>
 
       <button
-        onClick={() => console.log("logout")}
+        onClick={logout}
         className="menu-btn mt-10 text-red-300 hover:text-red-500"
       >
         <LogOut /> Sair
