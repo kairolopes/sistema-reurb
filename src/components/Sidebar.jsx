@@ -1,4 +1,4 @@
-import { Home, FilePlus, Search, FileText, Ticket, Settings, LogOut, Building } from "lucide-react";
+import { Home, FilePlus, Search, FileText, Ticket, Settings, LogOut } from "lucide-react";
 
 const Sidebar = ({ page, setPage, logout }) => {
   const menu = [
@@ -12,16 +12,19 @@ const Sidebar = ({ page, setPage, logout }) => {
 
   return (
     <aside className="sidebar">
-      <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-        <Building size={22} /> REURB
-      </h2>
+      <h1 className="text-xl font-bold mb-6 flex items-center gap-2">
+        <span role="img" aria-label="building">🏛️</span>
+        REURB
+      </h1>
 
-      <nav className="space-y-2">
+      <nav className="flex flex-col gap-2">
         {menu.map((item) => (
           <button
             key={item.id}
             onClick={() => setPage(item.id)}
-            className={`menu-btn ${page === item.id ? "active" : ""}`}
+            className={`flex items-center gap-3 p-3 rounded-lg transition ${
+              page === item.id ? "active" : ""
+            }`}
           >
             {item.icon}
             <span>{item.label}</span>
@@ -29,12 +32,15 @@ const Sidebar = ({ page, setPage, logout }) => {
         ))}
       </nav>
 
-      <button
-        onClick={logout}
-        className="menu-btn mt-10 text-red-300 hover:text-red-500"
-      >
-        <LogOut /> Sair
-      </button>
+      {/* Botão Sair */}
+      <div className="mt-auto pt-6">
+        <button
+          onClick={logout}
+          className="flex items-center gap-3 p-3 rounded-lg w-full bg-red-600 text-white hover:bg-red-700 transition"
+        >
+          <LogOut /> Sair
+        </button>
+      </div>
     </aside>
   );
 };
