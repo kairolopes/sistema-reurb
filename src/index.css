@@ -1,61 +1,139 @@
+/* ===============================
+   Tailwind
+================================*/
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Fonte Inter */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* ===============================
+   Fontes (Inter)
+================================*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 body {
-    font-family: 'Inter', sans-serif;
-    background: #f5f7fa;
+    font-family: "Inter", sans-serif;
+    background: #f5f6f8;
+    margin: 0;
+    padding: 0;
 }
 
-/* ===== MENU LATERAL ===== */
+/* ===============================
+   Sidebar estilo GOVBR
+================================*/
 
 .sidebar {
-    width: 240px;
-    background: #ffffff;
-    padding: 24px 20px;
-    border-right: 1px solid #e5e7eb;
+    background: #0c4a6e; /* Azul escuro GOVBR */
+    color: #fff;
+    width: 260px;
     height: 100vh;
+    padding: 20px;
     position: fixed;
-    top: 0;
     left: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
 }
 
-.sidebar a {
+/* Ícones da sidebar */
+.sidebar svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* Botões padrão */
+.sidebar button {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.85);
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 500;
+    text-align: left;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 8px;
-    margin-bottom: 8px;
-    font-size: 15px;
-    color: #1f2937;
-    font-weight: 500;
-    border-radius: 8px;
+    gap: 12px;
     transition: 0.2s;
 }
 
-.sidebar a:hover {
-    background: #eef2ff;
-    color: #2563eb;
+/* Hover suave */
+.sidebar button:hover {
+    background: rgba(255, 255, 255, 0.15);
 }
 
-.sidebar-icon {
-    font-size: 18px;
+/* Botão ativo */
+.sidebar .active {
+    background: #0284c7 !important; /* Azul GOVBR */
+    color: #fff !important;
 }
 
-.btn-sair {
-    margin-top: 20px;
-    font-size: 14px;
-    padding: 8px 10px;
-    background: #ef4444;
+/* ===============================
+   Conteúdo Ajustado
+================================*/
+
+main {
+    margin-left: 260px; /* espaço da sidebar */
+    padding: 30px;
+}
+
+/* ===============================
+   Sidebar modo recolhido
+================================*/
+
+.sidebar.collapsed {
+    width: 80px;
+    padding: 20px 10px;
+}
+
+.sidebar.collapsed button span:nth-child(2) {
+    display: none; /* esconde texto */
+}
+
+.sidebar.collapsed button {
+    justify-content: center;
+}
+
+/* ===============================
+   Botão para recolher a sidebar
+================================*/
+
+.sidebar-toggle {
+    position: absolute;
+    top: 20px;
+    right: -18px;
+    background: #0c4a6e;
     color: white;
-    border-radius: 6px;
-    display: inline-block;
-    text-align: center;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.15);
+    transition: 0.3s;
 }
 
-.btn-sair:hover {
-    background: #dc2626;
+.sidebar-toggle:hover {
+    transform: scale(1.05);
+}
+
+/* ===============================
+   Scroll
+================================*/
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
 }
