@@ -1,13 +1,61 @@
-/* IMPORT TEM QUE SER A PRIMEIRA LINHA */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-/* Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Fonte padrão */
-body { 
-    font-family: 'Inter', sans-serif; 
+/* Fonte Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f5f7fa;
 }
 
+/* ===== MENU LATERAL ===== */
+
+.sidebar {
+    width: 240px;
+    background: #ffffff;
+    padding: 24px 20px;
+    border-right: 1px solid #e5e7eb;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 8px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    color: #1f2937;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.sidebar a:hover {
+    background: #eef2ff;
+    color: #2563eb;
+}
+
+.sidebar-icon {
+    font-size: 18px;
+}
+
+.btn-sair {
+    margin-top: 20px;
+    font-size: 14px;
+    padding: 8px 10px;
+    background: #ef4444;
+    color: white;
+    border-radius: 6px;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-sair:hover {
+    background: #dc2626;
+}
