@@ -11,12 +11,13 @@ import {
   Building,
 } from "lucide-react";
 
+// Páginas
 import Dashboard from "./pages/Dashboard";
 import NovoCadastro from "./pages/NovoCadastro";
 import Consultar from "./pages/Consultar";
 import Relatorios from "./pages/Relatorios";
 import Tickets from "./pages/Tickets";
-import Config from "./pages/Config";
+import Config from "./pages/Config"; // <- arquivo existe agora!
 
 // Firebase
 import { initializeApp } from "firebase/app";
@@ -29,7 +30,7 @@ import {
 } from "firebase/auth";
 
 // ==============================
-// FIREBASE CONFIGURAÇÃO
+// FIREBASE CONFIG
 // ==============================
 
 const firebaseConfig = {
@@ -48,6 +49,9 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ============================
+  // ACOMPANHA LOGIN
+  // ============================
   useEffect(() => {
     return onAuthStateChanged(auth, (usr) => {
       setUser(usr);
@@ -56,7 +60,7 @@ const App = () => {
   }, []);
 
   // ============================
-  // LOGIN SCREEN
+  // TELA DE LOGIN
   // ============================
   const LoginScreen = () => {
     const [email, setEmail] = useState("");
@@ -86,22 +90,12 @@ const App = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
         <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-gray-200">
-
           <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
             Acesso ao Sistema REURB
           </h1>
 
-          {error && (
-            <p className="bg-red-100 p-3 text-red-700 rounded-lg text-sm mb-3">
-              {error}
-            </p>
-          )}
-
-          {message && (
-            <p className="bg-sky-100 p-3 text-sky-700 rounded-lg text-sm mb-3">
-              {message}
-            </p>
-          )}
+          {error && <p className="bg-red-100 p-3 text-red-700 rounded-lg text-sm mb-3">{error}</p>}
+          {message && <p className="bg-sky-100 p-3 text-sky-700 rounded-lg text-sm mb-3">{message}</p>}
 
           <form className="space-y-4" onSubmit={login}>
             <div>
@@ -115,7 +109,6 @@ const App = () => {
                 required
               />
             </div>
-
             <div>
               <label className="text-sm text-gray-600 mb-1 block">Senha</label>
               <input
@@ -128,18 +121,12 @@ const App = () => {
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-sky-600 text-white py-3 rounded-xl font-semibold hover:bg-sky-700"
-            >
+            <button type="submit" className="w-full bg-sky-600 text-white py-3 rounded-xl font-semibold hover:bg-sky-700">
               Entrar
             </button>
           </form>
 
-          <button
-            onClick={forgotPassword}
-            className="text-sm text-sky-600 mt-4 w-full text-center hover:text-sky-800"
-          >
+          <button onClick={forgotPassword} className="text-sm text-sky-600 mt-4 w-full text-center hover:text-sky-800">
             Esqueci a senha
           </button>
         </div>
@@ -148,58 +135,49 @@ const App = () => {
   };
 
   // ============================
-  // LAYOUT
+  // LAYOUT COM SIDEBAR
   // ============================
   const Layout = ({ children }) => (
-    <div className="flex min-h-screen">
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-white shadow-xl border-r p-5 flex flex-col justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-sky-800 mb-6 flex items-center gap-2">
-            <Building size={22} /> Sistema REURB
-          </h2>
+    <div className="flex">
+      <aside className="w-64 bg-sky-900 text-white min-h-screen p-5">
+        <h2 className="text-xl font-bold mb-8 flex items-center gap-2">
+          <Building size={22} /> REURB
+        </h2>
 
-          <nav className="flex flex-col gap-3">
-            <NavLink to="/" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
-              <Home size={18} /> Dashboard
-            </NavLink>
+        <nav className="space-y-3">
+          <SidebarLink to="/" icon={<Home size={20} />} label="Dashboard" />
+          <SidebarLink to="/novo" icon={<Plus size={20} />} label="Novo Cadastro" />
+          <SidebarLink to="/consultar" icon={<Search size={20} />} label="Consultar" />
+          <SidebarLink to="/relatorios" icon={<FileText size={20} />} label="Relatórios" />
+          <SidebarLink to="/tickets" icon={<Ticket size={20} />} label="Tickets" />
+          <SidebarLink to="/config" icon={<Settings size={20} />} label="Configurações" />
 
-            <NavLink to="/novo" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
-              <Plus size={18} /> Novo Cadastro
-            </NavLink>
-
-            <NavLink to="/consultar" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
-              <Search size={18} /> Consultar
-            </NavLink>
-
-            <NavLink to="/relatorios" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
-              <FileText size={18} /> Relatórios
-            </NavLink>
-
-            <NavLink to="/tickets" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
-              <Ticket size={18} /> Tickets
-            </NavLink>
-
-            <NavLink to="/config" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
-              <Settings size={18} /> Configurações
-            </NavLink>
-          </nav>
-        </div>
-
-        <button
-          onClick={() => signOut(auth)}
-          className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 text-red-600"
-        >
-          <LogOut size={18} /> Sair
-        </button>
+          <button
+            onClick={() => signOut(auth)}
+            className="flex items-center gap-3 mt-10 text-red-300 hover:text-red-500"
+          >
+            <LogOut size={20} /> Sair
+          </button>
+        </nav>
       </aside>
 
-      {/* CONTEÚDO */}
-      <main className="flex-1 bg-gray-50 p-8">{children}</main>
+      <main className="flex-1 bg-gray-100 p-6">{children}</main>
     </div>
   );
 
-  if (loading) return <p>Carregando...</p>;
+  const SidebarLink = ({ to, icon, label }) => (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `flex items-center gap-3 p-2 rounded-lg font-medium
+        ${isActive ? "bg-white text-sky-900" : "hover:bg-sky-700"}`
+      }
+    >
+      {icon} {label}
+    </NavLink>
+  );
+
+  if (loading) return null;
   if (!user) return <LoginScreen />;
 
   return (
