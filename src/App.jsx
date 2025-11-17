@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "./Sidebar";
-
+import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import NovoCadastro from "./pages/NovoCadastro";
 import Consultar from "./pages/Consultar";
@@ -144,3 +143,4 @@ const App = () => {
 };
 
 export default App;
+
