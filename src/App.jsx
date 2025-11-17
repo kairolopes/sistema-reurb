@@ -137,33 +137,36 @@ const App = () => {
   // ============================
   // LAYOUT COM SIDEBAR
   // ============================
-  const Layout = ({ children }) => (
-    <div className="flex">
-      <aside className="w-64 bg-sky-900 text-white min-h-screen p-5">
-        <h2 className="text-xl font-bold mb-8 flex items-center gap-2">
-          <Building size={22} /> REURB
-        </h2>
+const Layout = ({ children }) => (
+  <div className="flex">
 
-        <nav className="space-y-3">
-          <SidebarLink to="/" icon={<Home size={20} />} label="Dashboard" />
-          <SidebarLink to="/novo" icon={<Plus size={20} />} label="Novo Cadastro" />
-          <SidebarLink to="/consultar" icon={<Search size={20} />} label="Consultar" />
-          <SidebarLink to="/relatorios" icon={<FileText size={20} />} label="Relatórios" />
-          <SidebarLink to="/tickets" icon={<Ticket size={20} />} label="Tickets" />
-          <SidebarLink to="/config" icon={<Settings size={20} />} label="Configurações" />
+    {/* MENU LATERAL */}
+    <aside className="sidebar">
+      <h2 className="text-2xl font-bold mb-8 flex items-center gap-2">
+        🏛️ REURB
+      </h2>
 
-          <button
-            onClick={() => signOut(auth)}
-            className="flex items-center gap-3 mt-10 text-red-300 hover:text-red-500"
-          >
-            <LogOut size={20} /> Sair
-          </button>
-        </nav>
-      </aside>
+      <nav className="space-y-2">
+        <SidebarLink to="/" icon="🏠" label="Dashboard" />
+        <SidebarLink to="/novo" icon="➕" label="Novo Cadastro" />
+        <SidebarLink to="/consultar" icon="🔍" label="Consultar" />
+        <SidebarLink to="/relatorios" icon="📄" label="Relatórios" />
+        <SidebarLink to="/tickets" icon="🎫" label="Tickets" />
+        <SidebarLink to="/config" icon="⚙️" label="Configurações" />
+      </nav>
 
-      <main className="flex-1 bg-gray-100 p-6">{children}</main>
-    </div>
-  );
+      <button className="btn-sair mt-10" onClick={() => signOut(auth)}>
+        Sair
+      </button>
+    </aside>
+
+    {/* ÁREA PRINCIPAL */}
+    <main className="ml-[260px] w-full p-10">
+      {children}
+    </main>
+  </div>
+);
+
 
   const SidebarLink = ({ to, icon, label }) => (
     <NavLink
@@ -197,3 +200,4 @@ const App = () => {
 };
 
 export default App;
+
