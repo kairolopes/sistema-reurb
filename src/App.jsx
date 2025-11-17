@@ -1031,24 +1031,17 @@ const App = () => {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 sm:p-8 flex items-center justify-center">
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>{`
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-            body { font-family: 'Inter', sans-serif; }
-        `}</style>
-        <LoginScreen />
-      </div>
+        <LoginScreen />
+      </div>
     );
   }
 
-  // Se estiver autenticado, mostra o sistema principal
-  return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
-      <script src="https://cdn.tailwindcss.com"></script>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-      `}</style>
+
+// Se estiver autenticado, mostra o sistema principal
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+      <div className="max-w-4xl mx-auto bg-white p-6 sm:p-10 rounded-3xl shadow-2xl border border-gray-100">
+// ... restante do código principal
       
       <div className="max-w-4xl mx-auto bg-white p-6 sm:p-10 rounded-3xl shadow-2xl border border-gray-100">
         <header className="mb-8 border-b pb-4 flex justify-between items-center">
@@ -1099,3 +1092,4 @@ const App = () => {
 
 
 export default App;
+
