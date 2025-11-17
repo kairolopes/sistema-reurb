@@ -247,6 +247,8 @@ const App = () => {
   // ======================================================= //
   // ================== LOGIN SCREEN ======================= //
   // ======================================================= //
+import { sendPasswordResetEmail } from "firebase/auth";
+
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -266,15 +268,21 @@ const LoginScreen = () => {
     setLoading(false);
   };
 
-  // Função para recuperação de senha
-  const handleForgotPassword = () => {
+  const handleForgotPassword = async () => {
+    setError(null);
+    setMessage("");
+
     if (!email) {
       setError("Informe seu e-mail para recuperar a senha.");
       return;
     }
-    // Página de recuperação do Firebase Auth
-    const resetUrl = `https://www.firebase.com/account/#/login?email=${encodeURIComponent(email)}`;
-    window.open(resetUrl, "_blank");
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setMessage("Um link de redefinição foi enviado para o seu e-mail.");
+    } catch (err) {
+      setError("Não foi possível enviar o e-mail. Verifique o endereço informado.");
+    }
   };
 
   return (
@@ -326,7 +334,6 @@ const LoginScreen = () => {
           </button>
         </form>
 
-        {/* Esqueci a senha */}
         <button
           onClick={handleForgotPassword}
           className="text-sm text-sky-600 mt-4 w-full text-center hover:text-sky-800"
@@ -380,4 +387,5 @@ const LoginScreen = () => {
 };
 
 export default App;
+
 
