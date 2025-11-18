@@ -43,81 +43,90 @@ const App = () => {
     });
   }, []);
 
-  // Tela de Login
-  const LoginScreen = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [message, setMessage] = useState("");
+const LoginScreen = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-    const login = async (e) => {
-      e.preventDefault();
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (err) {
-        setError("E-mail ou senha incorretos.");
-      }
-    };
+  const login = async (e) => {
+    e.preventDefault();
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      setError("E-mail ou senha incorretos.");
+    }
+  };
 
-    const forgotPassword = async () => {
-      if (!email) return setError("Digite seu e-mail para recuperar a senha.");
-      try {
-        await sendPasswordResetEmail(auth, email);
-        setMessage("E-mail enviado! Verifique sua caixa de entrada.");
-      } catch (err) {
-        setError("Erro ao enviar e-mail de recuperação.");
-      }
-    };
+  const forgotPassword = async () => {
+    if (!email) return setError("Digite seu e-mail para recuperar a senha.");
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setMessage("E-mail enviado! Verifique sua caixa de entrada.");
+    } catch (err) {
+      setError("Erro ao enviar e-mail de recuperação.");
+    }
+  };
 
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md">
-          <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
-            Acesso ao Sistema REURB
-          </h1>
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-gray-200">
+        
+        <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
+          Acesso ao Sistema REURB
+        </h1>
 
-          {error && <p className="bg-red-100 p-3 rounded text-red-600">{error}</p>}
-          {message && <p className="bg-sky-100 p-3 rounded text-sky-700">{message}</p>}
+        {error && (
+          <p className="bg-red-100 p-3 rounded text-red-700 mb-2 text-sm">
+            {error}
+          </p>
+        )}
+        {message && (
+          <p className="bg-sky-100 p-3 rounded text-sky-700 mb-2 text-sm">
+            {message}
+          </p>
+        )}
 
-          <form className="space-y-4" onSubmit={login}>
-            <div>
-              <label className="text-sm text-gray-600 block">E-mail</label>
-              <input
-                type="email"
-                className="w-full p-2 border rounded"
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+        <form className="space-y-4" onSubmit={login}>
+          <div>
+            <label className="text-sm text-gray-600 block mb-1">E-mail</label>
+            <input
+              type="email"
+              className="w-full p-3 border rounded-lg outline-sky-500"
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-            <div>
-              <label className="text-sm text-gray-600 block">Senha</label>
-              <input
-                type="password"
-                className="w-full p-2 border rounded"
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-sky-600 text-white py-2 rounded hover:bg-sky-700"
-            >
-              Entrar
-            </button>
-          </form>
+          <div>
+            <label className="text-sm text-gray-600 block mb-1">Senha</label>
+            <input
+              type="password"
+              className="w-full p-3 border rounded-lg outline-sky-500"
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
           <button
-            onClick={forgotPassword}
-            className="text-sm text-sky-600 mt-4 w-full text-center"
+            type="submit"
+            className="w-full bg-sky-600 text-white py-3 rounded-lg hover:bg-sky-700 transition"
           >
-            Esqueci minha senha
+            Entrar
           </button>
-        </div>
+        </form>
+
+        <button
+          onClick={forgotPassword}
+          className="text-sm text-sky-600 mt-4 w-full text-center hover:underline"
+        >
+          Esqueci minha senha
+        </button>
+
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   // Se estiver carregando login
   if (loading) return <div>Carregando...</div>;
@@ -143,4 +152,5 @@ const App = () => {
 };
 
 export default App;
+
 
