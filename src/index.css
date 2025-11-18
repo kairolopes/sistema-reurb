@@ -59,9 +59,18 @@ body {
     color: #fff !important;
 }
 
-main {
+/* Só aplica margem quando o usuário estiver logado */
+main.authenticated {
     margin-left: 260px;
     padding: 30px;
+}
+
+/* Tela de login centralizada */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Scroll */
