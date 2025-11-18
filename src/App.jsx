@@ -66,8 +66,8 @@ const App = () => {
       }
     };
 
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 login-page">
+   return (
+  <div className="login-container">
         <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border">
           <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
             Acesso ao Sistema REURB
@@ -129,5 +129,6 @@ const App = () => {
 };
 
 export default App;
+
 
 
