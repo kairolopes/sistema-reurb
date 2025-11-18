@@ -51,6 +51,10 @@ setLogLevel('Debug'); // Habilita logs de debug do Firestore
 
 // Função Helper para Caminho Público do Firestore
 const getPublicCollection = (collectionName) => {
+  // ATENÇÃO: Para esta função funcionar, as Regras de Segurança do Firebase Firestore
+  // DEVEM permitir 'read' e 'write' para usuários autenticados (incluindo anônimos)
+  // no caminho: /artifacts/{appId}/public/data/{collectionName}
+  // Exemplo de regra necessária: allow read, write: if request.auth != null;
   return collection(db, `/artifacts/${appId}/public/data/${collectionName}`);
 };
 
@@ -731,16 +735,25 @@ const App = () => {
 
   // Placeholder para Sidebar (simplificado para App.jsx)
   const Sidebar = ({ page, setPage, logout }) => (
-    <nav className="sidebar bg-sky-800 text-white w-64 fixed h-full p-6 space-y-4 shadow-2xl">
+    // Alterado para 'flex flex-col' e removido o 'space-y-4' da nav principal
+    <nav className="sidebar bg-sky-800 text-white w-64 fixed h-full p-6 shadow-2xl flex flex-col">
       <h1 className="text-2xl font-bold mb-8 border-b border-sky-700 pb-4">REURB System</h1>
-      <p className="text-xs text-gray-400">Usuário ID: {userId}</p>
-      {['dashboard', 'novo', 'consultar', 'relatorios', 'tickets', 'config'].map((p) => (
-        <button key={p} onClick={() => setPage(p)}
-                className={`w-full text-left p-3 rounded-lg flex items-center space-x-3 transition ${page === p ? 'bg-sky-600 font-semibold' : 'hover:bg-sky-700'}`}>
-          <span className="capitalize">{p.replace('novo', 'Novo Cadastro')}</span>
-        </button>
-      ))}
-      <button onClick={logout} className="mt-8 w-full text-left p-3 rounded-lg flex items-center space-x-3 hover:bg-red-700 bg-red-600 transition">
+      <p className="text-xs text-gray-400 mb-6">Usuário ID: {userId}</p>
+      
+      {/* Novo div com espaçamento mais compacto para os itens do menu: space-y-2 */}
+      <div className="space-y-2">
+        {['dashboard', 'novo', 'consultar', 'relatorios', 'tickets', 'config'].map((p) => (
+          <button key={p} onClick={() => setPage(p)}
+                  className={`w-full text-left p-3 rounded-lg flex items-center space-x-3 transition ${page === p ? 'bg-sky-600 font-semibold' : 'hover:bg-sky-700'}`}>
+            <span className="capitalize">{p.replace('novo', 'Novo Cadastro')}</span>
+          </button>
+        ))}
+      </div>
+      
+      {/* Este div usa flex-grow para ocupar todo o espaço restante e empurrar o Sair para o fundo */}
+      <div className="flex-grow"></div> 
+
+      <button onClick={logout} className="w-full text-left p-3 rounded-lg flex items-center space-x-3 hover:bg-red-700 bg-red-600 transition">
         Sair
       </button>
     </nav>
@@ -824,7 +837,8 @@ const App = () => {
   
   // Placeholders para outras páginas
   const PagePlaceholder = ({ title }) => (
-    <div className="p-8">
+    // Adicionado bg-white, h-full e rounded-xl para dar o aspecto de "página" dentro da área cinza.
+    <div className="bg-white p-8 rounded-xl shadow-lg min-h-[calc(100vh-64px)]">
       <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
       <p className="mt-4 text-gray-600">Conteúdo da página {title} virá aqui.</p>
     </div>
