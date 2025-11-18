@@ -41,73 +41,80 @@ const App = () => {
     });
   }, []);
 
-  const LoginScreen = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [message, setMessage] = useState("");
+const LoginScreen = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-    const login = async (e) => {
-      e.preventDefault();
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch {
-        setError("E-mail ou senha incorretos.");
-      }
-    };
+  const login = async (e) => {
+    e.preventDefault();
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      setError("E-mail ou senha incorretos.");
+    }
+  };
 
-    const forgotPassword = async () => {
-      if (!email) return setError("Digite seu e-mail.");
-      try {
-        await sendPasswordResetEmail(auth, email);
-        setMessage("E-mail enviado para recuperação.");
-      } catch {
-        setError("Erro ao enviar recuperação.");
-      }
-    };
+  const forgotPassword = async () => {
+    if (!email) return setError("Digite seu e-mail para recuperar a senha.");
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setMessage("E-mail enviado! Verifique sua caixa de entrada.");
+    } catch (err) {
+      setError("Erro ao enviar e-mail de recuperação.");
+    }
+  };
 
-   return (
-  <div className="login-container">
-        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border">
-          <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
-            Acesso ao Sistema REURB
-          </h1>
+  return (
+    <div className="login-container">
+      <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md">
+        <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
+          Acesso ao Sistema REURB
+        </h1>
 
-          {error && <p className="bg-red-100 text-red-700 p-3 rounded mb-3">{error}</p>}
-          {message && <p className="bg-sky-100 text-sky-700 p-3 rounded mb-3">{message}</p>}
+        {error && <p className="bg-red-100 p-3 rounded text-red-600">{error}</p>}
+        {message && <p className="bg-sky-100 p-3 rounded text-sky-700">{message}</p>}
 
-          <form className="space-y-4" onSubmit={login}>
+        <form className="space-y-4" onSubmit={login}>
+          <div>
+            <label className="text-sm text-gray-600 block">E-mail</label>
             <input
               type="email"
-              placeholder="E-mail"
-              className="w-full p-3 border rounded-lg"
+              className="w-full p-2 border rounded"
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+          </div>
 
+          <div>
+            <label className="text-sm text-gray-600 block">Senha</label>
             <input
               type="password"
-              placeholder="Senha"
-              className="w-full p-3 border rounded-lg"
+              className="w-full p-2 border rounded"
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-
-            <button className="w-full bg-sky-600 text-white py-3 rounded-xl hover:bg-sky-700">
-              Entrar
-            </button>
-          </form>
+          </div>
 
           <button
-            onClick={forgotPassword}
-            className="text-sm text-sky-600 mt-4 w-full text-center"
+            type="submit"
+            className="w-full bg-sky-600 text-white py-2 rounded hover:bg-sky-700"
           >
-            Esqueci minha senha
+            Entrar
           </button>
-        </div>
+        </form>
+
+        <button
+          onClick={forgotPassword}
+          className="text-sm text-sky-600 mt-4 w-full text-center"
+        >
+          Esqueci minha senha
+        </button>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   if (loading) return <div>Carregando...</div>;
   if (!user) return <LoginScreen />;
@@ -129,6 +136,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
