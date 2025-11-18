@@ -1,18 +1,12 @@
-/* ===================================================
-   1. IMPORT da fonte (DEVE vir antes do Tailwind)
-=================================================== */
+/* IMPORT OBRIGATÓRIO - SEM NADA ANTES */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* ===================================================
-   2. Tailwind
-=================================================== */
+/* TAILWIND */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ===================================================
-   3. Fonte padrão do sistema
-=================================================== */
+/* Estilo global */
 body {
     font-family: "Inter", sans-serif;
     background: #f5f6f8;
@@ -20,10 +14,7 @@ body {
     padding: 0;
 }
 
-/* ===================================================
-   4. Sidebar estilo GOVBR
-=================================================== */
-
+/* Sidebar */
 .sidebar {
     background: #0c4a6e;
     color: #fff;
@@ -68,27 +59,12 @@ body {
     color: #fff !important;
 }
 
-/* ===================================================
-   5. Correção CRÍTICA — Layout SOMENTE para quem está logado
-=================================================== */
-
-/* Layout interno (com sidebar) */
-.app main {
+main {
     margin-left: 260px;
     padding: 30px;
 }
 
-/* Importante!  
-   Isso garante que a tela de login NÃO será empurrada para o lado.
-*/
-main {
-    margin-left: 0 !important;
-    padding: 0 !important;
-}
-
-/* ===================================================
-   6. Scrollbar estilizado
-=================================================== */
+/* Scroll */
 ::-webkit-scrollbar {
     width: 8px;
 }
