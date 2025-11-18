@@ -130,7 +130,25 @@ const LoginScreen = () => {
   );
 };
 
+  return (
+    <div className="app">
+      <Sidebar page={page} setPage={setPage} logout={() => signOut(auth)} />
+
+      <main>
+        {page === "dashboard" && <Dashboard />}
+        {page === "novo" && <NovoCadastro />}
+        {page === "consultar" && <Consultar />}
+        {page === "relatorios" && <Relatorios />}
+        {page === "tickets" && <Tickets />}
+        {page === "config" && <Config />}
+      </main>
+    </div>
+  );
+};
+
 export default App;
+
+
 
 
 
