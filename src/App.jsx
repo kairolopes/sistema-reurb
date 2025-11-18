@@ -8,6 +8,7 @@ import Relatorios from "./pages/Relatorios";
 import Tickets from "./pages/Tickets";
 import Config from "./pages/Config";
 
+// Firebase
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -17,6 +18,7 @@ import {
   signOut,
 } from "firebase/auth";
 
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyBxrh1bZu6cBaGj8YoUJtS5h5VP00SoAh4",
   authDomain: "sistema-reurb.firebaseapp.com",
@@ -34,6 +36,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState("dashboard");
 
+  // Verifica login
   useEffect(() => {
     return onAuthStateChanged(auth, (usr) => {
       setUser(usr);
@@ -41,96 +44,103 @@ const App = () => {
     });
   }, []);
 
-const LoginScreen = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  // Tela de Login
+  const LoginScreen = () => {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [message, setMessage] = useState("");
 
-  const login = async (e) => {
-    e.preventDefault();
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      setError("E-mail ou senha incorretos.");
-    }
-  };
+    const login = async (e) => {
+      e.preventDefault();
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        setError("E-mail ou senha incorretos.");
+      }
+    };
 
-  const forgotPassword = async () => {
-    if (!email) return setError("Digite seu e-mail para recuperar a senha.");
-    try {
-      await sendPasswordResetEmail(auth, email);
-      setMessage("E-mail enviado! Verifique sua caixa de entrada.");
-    } catch (err) {
-      setError("Erro ao enviar e-mail de recuperação.");
-    }
-  };
+    const forgotPassword = async () => {
+      if (!email) return setError("Digite seu e-mail para recuperar a senha.");
+      try {
+        await sendPasswordResetEmail(auth, email);
+        setMessage("E-mail enviado! Verifique sua caixa de entrada.");
+      } catch (err) {
+        setError("Erro ao enviar e-mail de recuperação.");
+      }
+    };
 
-  return (
-    <div className="login-container">
-      <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md">
-        
-        <h1 className="text-3xl font-bold text-sky-800 mb-8 text-center">
-          Acesso ao Sistema REURB
-        </h1>
+    return (
+      <div className="login-container">
+        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md">
+          <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
+            Acesso ao Sistema REURB
+          </h1>
 
-        {error && <p className="bg-red-100 p-3 rounded text-red-600 mb-2">{error}</p>}
-        {message && <p className="bg-sky-100 p-3 rounded text-sky-700 mb-2">{message}</p>}
+          {error && <p className="bg-red-100 p-3 rounded text-red-600">{error}</p>}
+          {message && <p className="bg-sky-100 p-3 rounded text-sky-700">{message}</p>}
 
-        <form className="space-y-4" onSubmit={login}>
-          
-          <div>
-            <label className="text-sm font-medium text-gray-700">E-mail</label>
-            <input
-              type="email"
-              className="w-full p-2 mt-1 border rounded-lg shadow-sm focus:ring focus:ring-sky-300"
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+          <form className="space-y-4" onSubmit={login}>
+            <div>
+              <label className="text-sm text-gray-600 block">E-mail</label>
+              <input
+                type="email"
+                className="w-full p-2 border rounded"
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700">Senha</label>
-            <input
-              type="password"
-              className="w-full p-2 mt-1 border rounded-lg shadow-sm focus:ring focus:ring-sky-300"
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+            <div>
+              <label className="text-sm text-gray-600 block">Senha</label>
+              <input
+                type="password"
+                className="w-full p-2 border rounded"
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-sky-600 text-white py-2 rounded hover:bg-sky-700"
+            >
+              Entrar
+            </button>
+          </form>
 
           <button
-            type="submit"
-            className="w-full bg-sky-600 text-white py-2 rounded-lg hover:bg-sky-7
+            onClick={forgotPassword}
+            className="text-sm text-sky-600 mt-4 w-full text-center"
+          >
+            Esqueci minha senha
+          </button>
+        </div>
+      </div>
+    );
+  };
 
-// Se estiver carregando login
-if (loading) return <div>Carregando...</div>;
+  // Se estiver carregando login
+  if (loading) return <div>Carregando...</div>;
 
-// Se NÃO estiver logado → mostrar login
-if (!user) return <LoginScreen />;
+  // Se NÃO estiver logado → mostrar login
+  if (!user) return <LoginScreen />;
 
-// Se logado → sistema normal
-return (
-  <div className="app">
-    
-    <Sidebar page={page} setPage={setPage} logout={() => signOut(auth)} />
+  // Se logado → sistema normal
+  return (
+    <div className="app">
+      <Sidebar page={page} setPage={setPage} logout={() => signOut(auth)} />
 
-    <main className={user ? "authenticated" : ""}>
-      {page === "dashboard" && <Dashboard />}
-      {page === "novo" && <NovoCadastro />}
-      {page === "consultar" && <Consultar />}
-      {page === "relatorios" && <Relatorios />}
-      {page === "tickets" && <Tickets />}
-      {page === "config" && <Config />}
-    </main>
-
-  </div>
-);
+      <main className="authenticated">
+        {page === "dashboard" && <Dashboard />}
+        {page === "novo" && <NovoCadastro />}
+        {page === "consultar" && <Consultar />}
+        {page === "relatorios" && <Relatorios />}
+        {page === "tickets" && <Tickets />}
+        {page === "config" && <Config />}
+      </main>
+    </div>
+  );
+};
 
 export default App;
-
-
-
-
-
-
