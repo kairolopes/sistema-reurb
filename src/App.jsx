@@ -310,74 +310,216 @@ const Etapa1Form = ({ form, municipios, loteamentosFiltrados, handleChange, next
     </>
 );
 
-const Etapa2Form = ({ form, handleChange, nextStep, prevStep }) => (
-    <>
-      <h2 className="text-2xl font-bold text-sky-800 mb-4">Etapa 2: Dados do Ocupante Principal</h2>
-      
-      {/* Nome e CPF */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-            <label className="text-sm font-medium text-gray-700 block">Nome Completo</label>
-            <input type="text" name="nome" value={form.nome} onChange={handleChange} 
-                   className="w-full p-2 border rounded-lg" required />
-        </div>
-        <div>
-            <label className="text-sm font-medium text-gray-700 block">CPF</label>
-            <input type="text" name="cpf" value={form.cpf} onChange={handleChange} 
-                   className="w-full p-2 border rounded-lg" maxLength={14} required />
-        </div>
-      </div>
-      
-      {/* Data Nasc. e Renda */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-            <label className="text-sm font-medium text-gray-700 block">Data de Nascimento</label>
-            <input type="date" name="data_nascimento" value={form.data_nascimento} onChange={handleChange} 
-                   className="w-full p-2 border rounded-lg" required />
-        </div>
-        <div>
-            <label className="text-sm font-medium text-gray-700 block">Renda Mensal (R$)</label>
-            <input type="number" name="renda_mensal" value={form.renda_mensal} onChange={handleChange} 
-                   className="w-full p-2 border rounded-lg" required />
-        </div>
-      </div>
+const Etapa2Form = ({ form, handleChange, nextStep, prevStep }) => {
+    
+    // Verifica se o campo Cônjuge/Companheiro deve ser exibido
+    const showConjugue = form.estado_civil === 'Casado' || form.em_uniao_estavel === true;
+    const isCasado = form.estado_civil === 'Casado';
 
-      {/* Estado Civil e Aquisição */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-            <label className="text-sm font-medium text-gray-700 block">Estado Civil</label>
-            <select name="estado_civil" value={form.estado_civil} onChange={handleChange} 
-                    className="w-full p-2 border rounded-lg">
-                <option value="Solteiro">Solteiro</option>
-                <option value="Casado">Casado</option>
-                <option value="UniaoEstavel">União Estável</option>
-                <option value="Divorciado">Divorciado</option>
-                <option value="Viuvo">Viúvo</option>
-            </select>
-        </div>
-        <div>
-            <label className="text-sm font-medium text-gray-700 block">Forma de Aquisição</label>
-            <select name="forma_aquisicao" value={form.forma_aquisicao} onChange={handleChange} 
-                    className="w-full p-2 border rounded-lg">
-                <option value="Compra e venda particular/recibo">Compra e venda particular/recibo</option>
-                <option value="Herança de inventário">Herança de inventário</option>
-                <option value="Doação particular/recibo">Doação particular/recibo</option>
-                <option value="Outro">Outro</option>
-            </select>
-        </div>
-      </div>
-      
-      {/* Botões */}
-      <div className="flex justify-between mt-6">
-          <button type="button" onClick={prevStep} className="px-6 py-2 text-sky-600 border border-sky-600 rounded-lg hover:bg-sky-50 transition">
-              Voltar (Localização)
-          </button>
-          <button type="button" onClick={nextStep} className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition">
-              Próxima Etapa (Declarações)
-          </button>
-      </div>
-    </>
-);
+    return (
+        <>
+          <h2 className="text-2xl font-bold text-sky-800 mb-4">Etapa 2: Dados do Ocupante Principal e Cônjuge</h2>
+          
+          {/* Identificação do Ocupante Principal */}
+          <div className="p-4 border border-sky-200 rounded-xl bg-sky-50 space-y-4 mb-6">
+              <h3 className="font-bold text-sky-700 border-b pb-2">Ocupante Principal</h3>
+              
+              {/* Nome e CPF */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="text-sm font-medium text-gray-700 block">Nome Completo</label>
+                    <input type="text" name="nome" value={form.nome} onChange={handleChange} 
+                           className="w-full p-2 border rounded-lg" required />
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-gray-700 block">CPF</label>
+                    <input type="text" name="cpf" value={form.cpf} onChange={handleChange} 
+                           className="w-full p-2 border rounded-lg" maxLength={14} required />
+                </div>
+              </div>
+
+              {/* RG e Expedidor */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="text-sm font-medium text-gray-700 block">Nº Identidade (RG)</label>
+                    <input type="text" name="rg" value={form.rg} onChange={handleChange} 
+                           className="w-full p-2 border rounded-lg" required />
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-gray-700 block">Órgão Expedidor / UF</label>
+                    <input type="text" name="orgao_expedidor" value={form.orgao_expedidor} onChange={handleChange} 
+                           className="w-full p-2 border rounded-lg" required />
+                </div>
+              </div>
+
+              {/* Filiação */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="text-sm font-medium text-gray-700 block">Nome do Pai</label>
+                    <input type="text" name="nome_pai" value={form.nome_pai} onChange={handleChange} 
+                           className="w-full p-2 border rounded-lg" required />
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-gray-700 block">Nome da Mãe</label>
+                    <input type="text" name="nome_mae" value={form.nome_mae} onChange={handleChange} 
+                           className="w-full p-2 border rounded-lg" required />
+                </div>
+              </div>
+
+              {/* Data Nasc. e Naturalidade */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="text-sm font-medium text-gray-700 block">Data de Nascimento</label>
+                    <input type="date" name="data_nascimento" value={form.data_nascimento} onChange={handleChange} 
+                           className="w-full p-2 border rounded-lg" required />
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-gray-700 block">Naturalidade / Nacionalidade</label>
+                    <input type="text" name="naturalidade" value={form.naturalidade} onChange={handleChange} 
+                           placeholder="Ex: NIQUELÂNDIA-GO / BRASILEIRA"
+                           className="w-full p-2 border rounded-lg" required />
+                </div>
+              </div>
+              
+              {/* Situação Profissional e Renda */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="text-sm font-medium text-gray-700 block">Profissão / Situação Ocupacional</label>
+                    <input type="text" name="profissao" value={form.profissao} onChange={handleChange} 
+                           placeholder="Ex: LAVRADORA"
+                           className="w-full p-2 border rounded-lg" required />
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-gray-700 block">Renda Mensal (R$)</label>
+                    <input type="number" name="renda_mensal" value={form.renda_mensal} onChange={handleChange} 
+                           className="w-full p-2 border rounded-lg" required />
+                </div>
+              </div>
+              
+              {/* Estado Civil e União Estável */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="text-sm font-medium text-gray-700 block">Estado Civil</label>
+                    <select name="estado_civil" value={form.estado_civil} onChange={handleChange} 
+                            className="w-full p-2 border rounded-lg">
+                        <option value="Solteiro">Solteiro</option>
+                        <option value="Casado">Casado</option>
+                        <option value="UniaoEstavel">União Estável</option>
+                        <option value="Divorciado">Divorciado</option>
+                        <option value="Viuvo">Viúvo</option>
+                        <option value="SeparadoJudicialmente">Separado judicialmente</option>
+                    </select>
+                </div>
+                <div className="flex items-end">
+                    <label className="flex items-center space-x-2 p-2 bg-gray-100 rounded-lg w-full">
+                        <input 
+                            type="checkbox" 
+                            name="em_uniao_estavel" 
+                            checked={form.em_uniao_estavel} 
+                            onChange={handleChange} 
+                            className="form-checkbox h-4 w-4 text-sky-600 rounded"
+                        />
+                        <span className="text-sm text-gray-700">Em união estável (Se diferente de Casado)</span>
+                    </label>
+                </div>
+              </div>
+          </div>
+
+
+          {/* IDENTIFICAÇÃO DO CÔNJUGE/COMPANHEIRO */}
+          {showConjugue && (
+              <div className="p-4 border border-red-200 rounded-xl bg-red-50 space-y-4 mb-6 transition-all duration-300">
+                  <h3 className="font-bold text-red-700 border-b pb-2">Dados do {isCasado ? 'Cônjuge' : 'Companheiro'}</h3>
+
+                  {/* Nome e CPF do Cônjuge */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block">Nome do {isCasado ? 'Cônjuge' : 'Companheiro'}</label>
+                        <input type="text" name="conjuge_nome" value={form.conjuge_nome} onChange={handleChange} 
+                               className="w-full p-2 border rounded-lg" required={showConjugue} />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block">CPF do {isCasado ? 'Cônjuge' : 'Companheiro'}</label>
+                        <input type="text" name="conjuge_cpf" value={form.conjuge_cpf} onChange={handleChange} 
+                               className="w-full p-2 border rounded-lg" maxLength={14} required={showConjugue} />
+                    </div>
+                  </div>
+
+                  {/* RG e Expedidor do Cônjuge */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block">Nº Identidade (RG) Cônjuge</label>
+                        <input type="text" name="conjuge_rg" value={form.conjuge_rg} onChange={handleChange} 
+                               className="w-full p-2 border rounded-lg" required={showConjugue} />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block">Órgão Expedidor / UF Cônjuge</label>
+                        <input type="text" name="conjuge_orgao_expedidor" value={form.conjuge_orgao_expedidor} onChange={handleChange} 
+                               className="w-full p-2 border rounded-lg" required={showConjugue} />
+                    </div>
+                  </div>
+
+                  {/* Filiação Cônjuge */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block">Nome do Pai Cônjuge</label>
+                        <input type="text" name="conjuge_nome_pai" value={form.conjuge_nome_pai} onChange={handleChange} 
+                               className="w-full p-2 border rounded-lg" required={showConjugue} />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block">Nome da Mãe Cônjuge</label>
+                        <input type="text" name="conjuge_nome_mae" value={form.conjuge_nome_mae} onChange={handleChange} 
+                               className="w-full p-2 border rounded-lg" required={showConjugue} />
+                    </div>
+                  </div>
+                  
+                  {/* Renda e Profissão Cônjuge */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block">Profissão / Situação Ocupacional Cônjuge</label>
+                        <input type="text" name="conjuge_profissao" value={form.conjuge_profissao} onChange={handleChange} 
+                               placeholder="Ex: PENSIONISTA"
+                               className="w-full p-2 border rounded-lg" required={showConjugue} />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block">Renda Mensal Cônjuge (R$)</label>
+                        <input type="number" name="conjuge_renda_mensal" value={form.conjuge_renda_mensal} onChange={handleChange} 
+                               className="w-full p-2 border rounded-lg" required={showConjugue} />
+                    </div>
+                  </div>
+              </div>
+          )}
+
+          {/* Aquisição */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div>
+                <label className="text-sm font-medium text-gray-700 block">Forma de Aquisição</label>
+                <select name="forma_aquisicao" value={form.forma_aquisicao} onChange={handleChange} 
+                       className="w-full p-2 border rounded-lg">
+                    <option value="Compra e venda particular/recibo">Compra e venda particular/recibo</option>
+                    <option value="Herança de inventário">Herança de inventário</option>
+                    <option value="Doação particular/recibo">Doação particular/recibo</option>
+                    <option value="Outro">Outro</option>
+                </select>
+            </div>
+            <div className="flex items-center justify-center">
+                <h3 className="font-bold text-gray-700 text-lg">Renda Familiar Total: R$ {parseFloat(form.renda_mensal || 0) + parseFloat(form.conjuge_renda_mensal || 0)}</h3>
+            </div>
+          </div>
+
+
+          {/* Botões */}
+          <div className="flex justify-between mt-6">
+              <button type="button" onClick={prevStep} className="px-6 py-2 text-sky-600 border border-sky-600 rounded-lg hover:bg-sky-50 transition">
+                  Voltar (Localização)
+              </button>
+              <button type="button" onClick={nextStep} className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition">
+                  Próxima Etapa (Declarações)
+              </button>
+          </div>
+        </>
+    );
+};
 
 const Etapa3Form = ({ form, handleChange, handleSubmitCadastro, prevStep, isLoading }) => (
     <>
@@ -395,7 +537,7 @@ const Etapa3Form = ({ form, handleChange, handleSubmitCadastro, prevStep, isLoad
         <label className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
             <input type="checkbox" name="decl_nao_proprietario" checked={form.decl_nao_proprietario} onChange={handleChange} 
                    className="form-checkbox h-5 w-5 text-sky-600 rounded" required />
-            <span className="text-sm text-gray-700">Não sou proprietário(a) exclusivo(a) de outro imóvel urbano ou rural.</span>
+            <span className="text-sm text-gray-700">Não sou/somos proprietário(s) exclusivo(s) de outro imóvel urbano ou rural.</span>
         </label>
         {/* Declaração de Anuência */}
         <label className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
@@ -496,12 +638,28 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
     quadra_lote: '',
     area_m2: 0, 
     endereco_completo: '',
-    // Parte B - Ocupante Principal (Simplificado para o exemplo)
+    // Parte B - Ocupante Principal (DETALHADO)
     nome: '',
     cpf: '',
+    rg: '', // NOVO
+    orgao_expedidor: '', // NOVO
+    nome_pai: '', // NOVO
+    nome_mae: '', // NOVO
     data_nascimento: '',
+    naturalidade: '', // NOVO (com nacionalidade)
+    profissao: '', // NOVO
     estado_civil: 'Solteiro',
+    em_uniao_estavel: false, // NOVO
     renda_mensal: 0, 
+    // Parte B - Cônjuge/Companheiro (NOVO)
+    conjuge_nome: '',
+    conjuge_cpf: '',
+    conjuge_rg: '',
+    conjuge_orgao_expedidor: '',
+    conjuge_nome_pai: '',
+    conjuge_nome_mae: '',
+    conjuge_profissao: '',
+    conjuge_renda_mensal: 0,
     // Parte C - Declarações (Baseado na ficha PDF)
     decl_veracidade: false,
     decl_nao_proprietario: false,
@@ -521,26 +679,51 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
   const [masterType, setMasterType] = useState(null); 
 
   // Função estática para lidar com o estado principal
-  // Esta função é o segredo para corrigir o problema de perda de foco
   const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
     
     let newValue;
     if (type === 'checkbox') {
         newValue = checked;
-    } else if (name === 'area_m2' || name === 'renda_mensal') {
+    } else if (name.includes('area_m2') || name.includes('renda_mensal')) {
         // Garante que números sejam números, mas aceita string vazia momentaneamente
         newValue = parseFloat(value) || (value === '' ? '' : 0);
     } else {
         newValue = value;
     }
 
-    // Usa a forma funcional de setForm
-    setForm(prevForm => ({
-        ...prevForm,
-        [name]: newValue
-    }));
-  }, []); // Dependency array is empty
+    // Lógica para limpar campos do cônjuge/união estável se o estado civil mudar para Solteiro/Divorciado/Viúvo
+    setForm(prevForm => {
+        let newForm = { ...prevForm, [name]: newValue };
+
+        if (name === 'estado_civil') {
+            if (newValue === 'Solteiro' || newValue === 'Divorciado' || newValue === 'Viuvo' || newValue === 'SeparadoJudicialmente') {
+                // Se mudou para Solteiro, Viuvo, Divorciado, ou Separado, reseta os campos do conjuge/uniao estavel
+                newForm.em_uniao_estavel = false;
+                // Limpa todos os campos do conjuge se não for casado
+                newForm.conjuge_nome = '';
+                newForm.conjuge_cpf = '';
+                newForm.conjuge_rg = '';
+                newForm.conjuge_orgao_expedidor = '';
+                newForm.conjuge_nome_pai = '';
+                newForm.conjuge_nome_mae = '';
+                newForm.conjuge_profissao = '';
+                newForm.conjuge_renda_mensal = 0;
+            }
+        } else if (name === 'em_uniao_estavel' && newValue === false && prevForm.estado_civil !== 'Casado') {
+            // Se desmarcou União Estável, e não é casado, limpa os campos do companheiro
+            newForm.conjuge_nome = '';
+            newForm.conjuge_cpf = '';
+            newForm.conjuge_rg = '';
+            newForm.conjuge_orgao_expedidor = '';
+            newForm.conjuge_nome_pai = '';
+            newForm.conjuge_nome_mae = '';
+            newForm.conjuge_profissao = '';
+            newForm.conjuge_renda_mensal = 0;
+        }
+        return newForm;
+    });
+  }, []); 
 
   // Filtra loteamentos baseado no município selecionado
   const loteamentosFiltrados = useMemo(() => {
@@ -589,11 +772,18 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
         form.id_loteamento_fk, municipios, loteamentos
       );
 
-      // 2. Preparar dados (Converte valores vazios/null para 0 para Firestore)
+      // 2. Calcular Renda Familiar Total
+      const rendaOcupante = parseFloat(form.renda_mensal) || 0;
+      const rendaConjuge = parseFloat(form.conjuge_renda_mensal) || 0;
+      const rendaFamiliarTotal = rendaOcupante + rendaConjuge;
+
+      // 3. Preparar dados (Converte valores vazios/null para 0 para Firestore)
       const dadosCadastro = {
         ...form,
         area_m2: parseFloat(form.area_m2) || 0,
-        renda_mensal: parseFloat(form.renda_mensal) || 0,
+        renda_mensal: rendaOcupante,
+        conjuge_renda_mensal: rendaConjuge,
+        renda_familiar_total: rendaFamiliarTotal, // NOVO: Campo calculado
         numero_cadastro,
         numero_cadastro_prefixo, // Campo auxiliar para consultas eficientes
         createdAt: new Date(),
@@ -601,17 +791,21 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
         status_assinatura: 'Pendente',
       };
 
-      // 3. Salvar no Firestore
+      // 4. Salvar no Firestore
       const docRef = await addDoc(getPublicCollection('cadastros'), dadosCadastro);
 
-      // 4. Limpar e mostrar sucesso
+      // 5. Limpar e mostrar sucesso
       const generatedMessage = `Cadastro concluído! ID gerado: ${numero_cadastro}`;
+      // Resetando o formulário
       setForm({
         id_municipio_fk: '', id_loteamento_fk: '', quadra_lote: '', area_m2: 0, endereco_completo: '',
-        nome: '', cpf: '', data_nascimento: '', estado_civil: 'Solteiro', renda_mensal: 0,
+        nome: '', cpf: '', rg: '', orgao_expedidor: '', nome_pai: '', nome_mae: '', data_nascimento: '', naturalidade: '', profissao: '',
+        estado_civil: 'Solteiro', em_uniao_estavel: false, renda_mensal: 0,
+        conjuge_nome: '', conjuge_cpf: '', conjuge_rg: '', conjuge_orgao_expedidor: '', conjuge_nome_pai: '', conjuge_nome_mae: '', conjuge_profissao: '', conjuge_renda_mensal: 0,
         decl_veracidade: false, decl_nao_proprietario: false, decl_anuencia_medidas: false,
         tipo_reurb: 'Reurb-S', forma_aquisicao: 'Compra e venda particular/recibo', status_assinatura: 'Pendente',
       });
+
       setEtapa(4); // Mover para a etapa de Assinatura/Conclusão
       setMessage(generatedMessage);
       
@@ -825,7 +1019,7 @@ const App = () => {
   }, [isAuthReady, userId]); // Depende da conclusão da autenticação
 
   // Placeholder para Sidebar (simplificado para App.jsx)
-  const Sidebar = ({ page, setPage, logout }) => (
+  const Sidebar = ({ page, setPage, userId }) => (
     // Alterado para 'flex flex-col' e removido o 'space-y-4' da nav principal
     <nav className="sidebar bg-sky-800 text-white w-64 fixed h-full p-6 shadow-2xl flex flex-col">
       <h1 className="text-2xl font-bold mb-8 border-b border-sky-700 pb-4">REURB System</h1>
@@ -959,6 +1153,7 @@ const App = () => {
         {page === "tickets" && <PagePlaceholder title="Tickets" />}
         {page === "config" && <PagePlaceholder title="Configurações" />}
       </main>
+      
     </div>
   );
 };
