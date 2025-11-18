@@ -69,29 +69,31 @@ const LoginScreen = () => {
   return (
     <div className="login-container">
       <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md">
-        <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
+        
+        <h1 className="text-3xl font-bold text-sky-800 mb-8 text-center">
           Acesso ao Sistema REURB
         </h1>
 
-        {error && <p className="bg-red-100 p-3 rounded text-red-600">{error}</p>}
-        {message && <p className="bg-sky-100 p-3 rounded text-sky-700">{message}</p>}
+        {error && <p className="bg-red-100 p-3 rounded text-red-600 mb-2">{error}</p>}
+        {message && <p className="bg-sky-100 p-3 rounded text-sky-700 mb-2">{message}</p>}
 
         <form className="space-y-4" onSubmit={login}>
+          
           <div>
-            <label className="text-sm text-gray-600 block">E-mail</label>
+            <label className="text-sm font-medium text-gray-700">E-mail</label>
             <input
               type="email"
-              className="w-full p-2 border rounded"
+              className="w-full p-2 mt-1 border rounded-lg shadow-sm focus:ring focus:ring-sky-300"
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-600 block">Senha</label>
+            <label className="text-sm font-medium text-gray-700">Senha</label>
             <input
               type="password"
-              className="w-full p-2 border rounded"
+              className="w-full p-2 mt-1 border rounded-lg shadow-sm focus:ring focus:ring-sky-300"
               onChange={(e) => setPassword(e.target.value)}
               required
             />
@@ -99,22 +101,7 @@ const LoginScreen = () => {
 
           <button
             type="submit"
-            className="w-full bg-sky-600 text-white py-2 rounded hover:bg-sky-700"
-          >
-            Entrar
-          </button>
-        </form>
-
-        <button
-          onClick={forgotPassword}
-          className="text-sm text-sky-600 mt-4 w-full text-center"
-        >
-          Esqueci minha senha
-        </button>
-      </div>
-    </div>
-  );
-};
+            className="w-full bg-sky-600 text-white py-2 rounded-lg hover:bg-sky-7
 
   if (loading) return <div>Carregando...</div>;
   if (!user) return <LoginScreen />;
@@ -136,6 +123,7 @@ const LoginScreen = () => {
 };
 
 export default App;
+
 
 
 
