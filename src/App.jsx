@@ -116,7 +116,7 @@ const App = () => {
     <div className="app">
       <Sidebar page={page} setPage={setPage} logout={() => signOut(auth)} />
 
-      <main>
+      <main className="conteudo">
         {page === "dashboard" && <Dashboard />}
         {page === "novo" && <NovoCadastro />}
         {page === "consultar" && <Consultar />}
@@ -129,3 +129,4 @@ const App = () => {
 };
 
 export default App;
+
