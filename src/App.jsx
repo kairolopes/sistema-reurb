@@ -70,40 +70,42 @@ const LoginScreen = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-gray-200">
-        
-        <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md">
+
+        <h1 className="text-3xl font-bold text-sky-800 text-center mb-6">
           Acesso ao Sistema REURB
         </h1>
 
         {error && (
-          <p className="bg-red-100 p-3 rounded text-red-700 mb-2 text-sm">
+          <p className="bg-red-100 text-red-700 p-3 rounded mb-2">
             {error}
           </p>
         )}
+
         {message && (
-          <p className="bg-sky-100 p-3 rounded text-sky-700 mb-2 text-sm">
+          <p className="bg-sky-100 text-sky-700 p-3 rounded mb-2">
             {message}
           </p>
         )}
 
-        <form className="space-y-4" onSubmit={login}>
+        <form onSubmit={login} className="space-y-4">
+
           <div>
-            <label className="text-sm text-gray-600 block mb-1">E-mail</label>
+            <label className="text-gray-600 font-medium text-sm">E-mail</label>
             <input
               type="email"
-              className="w-full p-3 border rounded-lg outline-sky-500"
+              className="w-full mt-1 p-2 border rounded-lg focus:ring focus:ring-sky-200"
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-600 block mb-1">Senha</label>
+            <label className="text-gray-600 font-medium text-sm">Senha</label>
             <input
               type="password"
-              className="w-full p-3 border rounded-lg outline-sky-500"
+              className="w-full mt-1 p-2 border rounded-lg focus:ring focus:ring-sky-200"
               onChange={(e) => setPassword(e.target.value)}
               required
             />
@@ -111,7 +113,7 @@ const LoginScreen = () => {
 
           <button
             type="submit"
-            className="w-full bg-sky-600 text-white py-3 rounded-lg hover:bg-sky-700 transition"
+            className="w-full bg-sky-600 text-white py-2 rounded-lg hover:bg-sky-700 transition"
           >
             Entrar
           </button>
@@ -119,40 +121,17 @@ const LoginScreen = () => {
 
         <button
           onClick={forgotPassword}
-          className="text-sm text-sky-600 mt-4 w-full text-center hover:underline"
+          className="w-full mt-4 text-sm text-sky-600 hover:underline"
         >
           Esqueci minha senha
         </button>
-
       </div>
     </div>
   );
 };
 
-  // Se estiver carregando login
-  if (loading) return <div>Carregando...</div>;
-
-  // Se NÃO estiver logado → mostrar login
-  if (!user) return <LoginScreen />;
-
-  // Se logado → sistema normal
-  return (
-    <div className="app">
-      <Sidebar page={page} setPage={setPage} logout={() => signOut(auth)} />
-
-      <main>
-        {page === "dashboard" && <Dashboard />}
-        {page === "novo" && <NovoCadastro />}
-        {page === "consultar" && <Consultar />}
-        {page === "relatorios" && <Relatorios />}
-        {page === "tickets" && <Tickets />}
-        {page === "config" && <Config />}
-      </main>
-    </div>
-  );
-};
-
 export default App;
+
 
 
 
