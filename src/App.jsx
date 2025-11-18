@@ -234,10 +234,303 @@ const MasterFormModal = ({ masterType, municipios, userId, isAuthReady, onClose,
     );
 };
 
+// =================================================================
+// 3. COMPONENTE DE CONSULTA DE CADASTROS (NOVO)
+// =================================================================
 
-// =================================================================
-// 3. COMPONENTES DAS ETAPAS (EXTRAÍDOS PARA CORRIGIR O FOCO)
-// =================================================================
+const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) => {
+    const [allCadastros, setAllCadastros] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Filtros
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterMunicipio, setFilterMunicipio] = useState('');
+    const [filterLoteamento, setFilterLoteamento] = useState('');
+    const [filterReurb, setFilterReurb] = useState('');
+
+    // Busca de Dados (useEffect)
+    useEffect(() => {
+        if (!isAuthReady || !userId) return;
+
+        const cadastrosCol = getPublicCollection('cadastros');
+        
+        // Usamos onSnapshot para real-time updates e para simplificar o fetch
+        const unsubscribe = onSnapshot(cadastrosCol, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setAllCadastros(data);
+            setLoading(false);
+        }, (err) => {
+            console.error("Erro ao carregar cadastros:", err);
+            setError("Falha ao carregar dados do Firestore. Verifique as regras de segurança.");
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [isAuthReady, userId]);
+
+    // Lógica de Filtragem
+    const cadastrosFiltrados = useMemo(() => {
+        let filtered = allCadastros;
+
+        // 1. Filtragem por Município
+        if (filterMunicipio) {
+            filtered = filtered.filter(c => c.id_municipio_fk === filterMunicipio);
+        }
+
+        // 2. Filtragem por Loteamento
+        if (filterLoteamento) {
+            filtered = filtered.filter(c => c.id_loteamento_fk === filterLoteamento);
+        }
+
+        // 3. Filtragem por Tipo REURB
+        if (filterReurb) {
+            filtered = filtered.filter(c => c.tipo_reurb === filterReurb);
+        }
+
+        // 4. Filtragem por Termo de Busca (Case-insensitive search across key fields)
+        const term = searchTerm.toLowerCase().trim();
+        if (term) {
+            filtered = filtered.filter(c => 
+                c.numero_cadastro?.toLowerCase().includes(term) ||
+                c.nome?.toLowerCase().includes(term) ||
+                c.cpf?.toLowerCase().includes(term) ||
+                c.quadra_lote?.toLowerCase().includes(term) ||
+                c.endereco_completo?.toLowerCase().includes(term) ||
+                c.conjuge_nome?.toLowerCase().includes(term) ||
+                c.conjuge_cpf?.toLowerCase().includes(term)
+            );
+        }
+        
+        // Ordenação (Ex: por ID de cadastro) - Client-side sort
+        return filtered.sort((a, b) => (b.numero_cadastro || '').localeCompare(a.numero_cadastro || ''));
+
+    }, [allCadastros, searchTerm, filterMunicipio, filterLoteamento, filterReurb]);
+
+    // Função auxiliar para obter o nome do local
+    const getLoteamentoNome = useCallback((id) => {
+        return loteamentos.find(l => l.id === id)?.nome_nucleo || 'N/A';
+    }, [loteamentos]);
+
+    // Função auxiliar para obter o nome do município
+    const getMunicipioNome = useCallback((id) => {
+        return municipios.find(m => m.id === id)?.nome || 'N/A';
+    }, [municipios]);
+
+    // Loteamentos Filtrados por Município
+    const loteamentosDisponiveis = useMemo(() => {
+        // Se um município for selecionado, filtra os loteamentos
+        if (filterMunicipio) {
+            return loteamentos.filter(l => l.id_municipio_fk === filterMunicipio);
+        }
+        // Caso contrário, mostra todos ou nenhum (depende da UX preferida, aqui mostramos todos por padrão)
+        return loteamentos; 
+    }, [loteamentos, filterMunicipio]);
+
+    // Função auxiliar para formatar a data
+    const formatCadastroDate = (timestamp) => {
+        if (!timestamp || !timestamp.toDate) return 'N/A';
+        try {
+            return timestamp.toDate().toLocaleDateString('pt-BR');
+        } catch (e) {
+            console.error("Erro ao formatar data:", e);
+            return 'Inválida';
+        }
+    };
+
+
+    // Placeholder para função de Relatório (Ação simulada)
+    const handleGenerateReport = (type) => {
+        // Simulação simples de relatório
+        const reportData = cadastrosFiltrados.map(c => ({
+            "ID Cadastro": c.numero_cadastro,
+            "Ocupante": c.nome,
+            "CPF Ocupante": c.cpf,
+            "Município": getMunicipioNome(c.id_municipio_fk),
+            "Núcleo Urbano": getLoteamentoNome(c.id_loteamento_fk),
+            "Quadra/Lote": c.quadra_lote,
+            "Tipo REURB": c.tipo_reurb,
+            // CORREÇÃO: Acessa renda familiar total corretamente
+            "Renda Familiar Total": parseFloat(c.renda_familiar_total || c.renda_mensal || 0).toFixed(2), 
+            "Status Assinatura": c.status_assinatura,
+            // CORREÇÃO: Usa a função formatCadastroDate para segurança
+            "Data Cadastro": formatCadastroDate(c.createdAt),
+        }));
+
+        if (reportData.length === 0) {
+            console.error("Não há dados para gerar o relatório.");
+            // Usar um modal em vez de alert
+            document.getElementById('report-message').innerText = "Não há dados para gerar o relatório com os filtros atuais.";
+            return;
+        }
+
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + Object.keys(reportData[0]).join(";") + "\n"
+            + reportData.map(e => Object.values(e).join(";")).join("\n");
+
+        // Cria e clica em um link invisível para download
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `${type.replace(/ /g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        document.getElementById('report-message').innerText = `Relatório "${type}" gerado com sucesso!`;
+    };
+
+
+    return (
+        <div className="bg-white p-8 rounded-2xl shadow-xl min-h-[calc(100vh-64px)]">
+            <h1 className="text-3xl font-extrabold text-sky-800 mb-6 border-b pb-4">Consultar Cadastros REURB</h1>
+            
+            {error && <p className="bg-red-100 p-3 rounded-xl text-red-700 mb-6">{error}</p>}
+
+            {/* BARRA DE PESQUISA E FILTROS */}
+            <div className="space-y-4 mb-6 p-4 border rounded-xl bg-gray-50">
+                <input
+                    type="text"
+                    placeholder="Pesquisar por Nome, CPF, ID, Quadra/Lote ou Endereço (Ocupante/Cônjuge)..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 transition"
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Filtro Município */}
+                    <select
+                        value={filterMunicipio}
+                        onChange={(e) => {
+                            setFilterMunicipio(e.target.value);
+                            setFilterLoteamento(''); // Limpa o loteamento ao trocar o município
+                        }}
+                        className="p-3 border border-gray-300 rounded-lg"
+                    >
+                        <option value="">Filtrar por Município (Todos)</option>
+                        {municipios.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
+                    </select>
+
+                    {/* Filtro Loteamento */}
+                    <select
+                        value={filterLoteamento}
+                        onChange={(e) => setFilterLoteamento(e.target.value)}
+                        className="p-3 border border-gray-300 rounded-lg"
+                        disabled={!filterMunicipio}
+                    >
+                        <option value="">Filtrar por Loteamento (Todos)</option>
+                        {loteamentosDisponiveis.map(l => <option key={l.id} value={l.id}>{l.nome_nucleo}</option>)}
+                    </select>
+
+                    {/* Filtro REURB */}
+                    <select
+                        value={filterReurb}
+                        onChange={(e) => setFilterReurb(e.target.value)}
+                        className="p-3 border border-gray-300 rounded-lg"
+                    >
+                        <option value="">Filtrar por Tipo REURB (Todos)</option>
+                        <option value="Reurb-S">Reurb-S</option>
+                        <option value="Reurb-E">Reurb-E</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* BOTÕES DE RELATÓRIOS */}
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6 border-b pb-4">
+                <button 
+                    onClick={() => handleGenerateReport('Listagem_Completa')}
+                    className="flex-1 min-w-[200px] px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold"
+                    disabled={cadastrosFiltrados.length === 0}
+                >
+                    Exportar Listagem Atual ({cadastrosFiltrados.length})
+                </button>
+                <button 
+                    onClick={() => handleGenerateReport('Relatorio_por_Municipio')}
+                    className="flex-1 min-w-[200px] px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold"
+                    disabled={cadastrosFiltrados.length === 0}
+                >
+                    Relatório por Município (CSV)
+                </button>
+                <button 
+                    onClick={() => handleGenerateReport('Relatorio_Renda_Familiar')}
+                    className="flex-1 min-w-[200px] px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold"
+                    disabled={cadastrosFiltrados.length === 0}
+                >
+                    Relatório Renda Familiar (CSV)
+                </button>
+                <div id="report-message" className="w-full text-center p-2 text-sm text-sky-700 font-medium mt-2"></div>
+
+            </div>
+
+
+            {/* RESULTADOS DA CONSULTA */}
+            <h2 className="text-xl font-bold text-gray-700 mb-4">
+                Resultados ({cadastrosFiltrados.length} encontrados)
+            </h2>
+            
+            {loading ? (
+                <p className="text-center p-8 text-gray-500 border rounded-xl">Carregando cadastros...</p>
+            ) : (
+                <div className="overflow-x-auto rounded-lg border shadow-sm">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">ID Cadastro</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Ocupante Principal (CPF)</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Núcleo Urbano / Quadra</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">Tipo REURB / Renda</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {cadastrosFiltrados.map((c) => (
+                                <tr key={c.id} className="hover:bg-gray-50 transition">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-sky-700">{c.numero_cadastro}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {c.nome} <span className="text-xs text-gray-500 block">({c.cpf})</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                        <span className="font-medium">{getMunicipioNome(c.id_municipio_fk)} / {getLoteamentoNome(c.id_loteamento_fk)}</span>
+                                        <span className="text-xs text-gray-400 block">{c.quadra_lote}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${c.tipo_reurb === 'Reurb-S' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                            {c.tipo_reurb}
+                                        </span>
+                                        <span className="text-xs text-gray-500 block">R$ {parseFloat(c.renda_familiar_total || c.renda_mensal || 0).toFixed(2)}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${c.status_assinatura === 'Pendente' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                                            {c.status_assinatura}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button 
+                                            // Substituído o alert() por uma função de console.log
+                                            onClick={() => console.log(`Visualizando detalhes do ID: ${c.numero_cadastro}`, c)} 
+                                            className="text-sky-600 hover:text-sky-900 text-sm">
+                                            Detalhes
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+            
+            {cadastrosFiltrados.length === 0 && !loading && (
+                <p className="text-center text-gray-500 p-8 border rounded-xl">Nenhum cadastro encontrado com os filtros aplicados.</p>
+            )}
+
+        </div>
+    );
+};
+
+
+// -------------------------------------------------------------------
+// Componentes de Etapa (Mantidos para garantir a correção de foco)
+// -------------------------------------------------------------------
 
 const Etapa1Form = ({ form, municipios, loteamentosFiltrados, handleChange, nextStep, setShowMasterForm, setMasterType }) => (
     <>
@@ -561,6 +854,9 @@ const Etapa3Form = ({ form, handleChange, handleSubmitCadastro, prevStep, isLoad
                   <span className="ml-2 text-gray-700">Reurb-E</span>
               </label>
           </div>
+          <div className="text-sm text-gray-500 mt-2">
+            Reurb-S (Social) - Para núcleos ocupados predominantemente por população de baixa renda.
+          </div>
       </div>
       
       {/* Botões */}
@@ -621,6 +917,7 @@ const Etapa5Complete = ({ setEtapa }) => (
         <button onClick={() => setEtapa(1)} className="px-6 py-3 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition">
             Iniciar Novo Cadastro
         </button>
+        
     </div>
 );
 
@@ -1116,6 +1413,7 @@ const App = () => {
             Esqueci minha senha
           </button>
         </div>
+        
       </div>
     );
   };
@@ -1148,7 +1446,12 @@ const App = () => {
             userId={userId} 
             isAuthReady={isAuthReady} 
         />}
-        {page === "consultar" && <PagePlaceholder title="Consultar Cadastros" />}
+        {page === "consultar" && <ConsultarCadastros
+            municipios={municipios}
+            loteamentos={loteamentos}
+            userId={userId}
+            isAuthReady={isAuthReady}
+        />}
         {page === "relatorios" && <PagePlaceholder title="Relatórios" />}
         {page === "tickets" && <PagePlaceholder title="Tickets" />}
         {page === "config" && <PagePlaceholder title="Configurações" />}
