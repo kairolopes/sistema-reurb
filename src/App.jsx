@@ -103,26 +103,32 @@ const LoginScreen = () => {
             type="submit"
             className="w-full bg-sky-600 text-white py-2 rounded-lg hover:bg-sky-7
 
-  if (loading) return <div>Carregando...</div>;
-  if (!user) return <LoginScreen />;
+// Se estiver carregando login
+if (loading) return <div>Carregando...</div>;
 
-  return (
-    <div className="app">
-      <Sidebar page={page} setPage={setPage} logout={() => signOut(auth)} />
+// Se NÃO estiver logado → mostrar login
+if (!user) return <LoginScreen />;
 
-     <main className={user ? "authenticated" : ""}>
-        {page === "dashboard" && <Dashboard />}
-        {page === "novo" && <NovoCadastro />}
-        {page === "consultar" && <Consultar />}
-        {page === "relatorios" && <Relatorios />}
-        {page === "tickets" && <Tickets />}
-        {page === "config" && <Config />}
-      </main>
-    </div>
-  );
-};
+// Se logado → sistema normal
+return (
+  <div className="app">
+    
+    <Sidebar page={page} setPage={setPage} logout={() => signOut(auth)} />
+
+    <main className={user ? "authenticated" : ""}>
+      {page === "dashboard" && <Dashboard />}
+      {page === "novo" && <NovoCadastro />}
+      {page === "consultar" && <Consultar />}
+      {page === "relatorios" && <Relatorios />}
+      {page === "tickets" && <Tickets />}
+      {page === "config" && <Config />}
+    </main>
+
+  </div>
+);
 
 export default App;
+
 
 
 
