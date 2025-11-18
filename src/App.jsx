@@ -1,3 +1,4 @@
+import "./index.css";
 import React, { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
@@ -152,5 +153,6 @@ const LoginScreen = () => {
 };
 
 export default App;
+
 
 
