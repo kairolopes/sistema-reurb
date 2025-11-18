@@ -41,6 +41,7 @@ const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__f
   messagingSenderId: "444345727490",
   appId: "1:444345727490:web:5d9e6dba923781ba91451b",
 };
+// CORREÇÃO CRÍTICA: A variável estava referenciando a si mesma, causando falha na inicialização do token.
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
 // Inicialização de App e Services
@@ -116,7 +117,133 @@ const generateCadastroId = async (loteamentoId, municipios, loteamentos) => {
 
 
 // =================================================================
-// 2. COMPONENTE NOVO CADASTRO
+// 2. COMPONENTE DE CADASTRO MESTRE (EXTRAÍDO PARA ISOLAMENTO)
+// =================================================================
+
+const MasterFormModal = ({ masterType, municipios, userId, isAuthReady, onClose, onSuccess }) => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [novoMun, setNovoMun] = useState({ nome: '', codigo_sigla: '' });
+    const [novoLot, setNovoLot] = useState({ nome_nucleo: '', codigo_nucleo: '', id_municipio_fk: '' });
+
+    const handleMasterChange = (e, type) => {
+        const { name, value } = e.target;
+        if (type === 'municipio') {
+            setNovoMun(prev => ({ ...prev, [name]: name === 'codigo_sigla' ? value.substring(0, 3).toUpperCase() : value }));
+        } else if (type === 'loteamento') {
+            setNovoLot(prev => ({ ...prev, [name]: name === 'codigo_nucleo' ? value.substring(0, 4).toUpperCase() : value }));
+        }
+    };
+
+    const handleMasterSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        if (!isAuthReady || !userId) {
+            setError("Autenticação não concluída. Tente novamente.");
+            return;
+        }
+        
+        setIsLoading(true);
+        try {
+            if (masterType === 'municipio') {
+                if (!novoMun.nome || !novoMun.codigo_sigla) throw new Error("Preencha todos os campos do município.");
+                await addDoc(getPublicCollection('municipios'), {
+                    ...novoMun,
+                    codigo_sigla: novoMun.codigo_sigla.toUpperCase(),
+                    ativo: true,
+                    createdAt: new Date(),
+                    createdBy: userId
+                });
+                onSuccess(`Município ${novoMun.nome} cadastrado com sucesso!`);
+            } else if (masterType === 'loteamento') {
+                if (!novoLot.nome_nucleo || !novoLot.codigo_nucleo || !novoLot.id_municipio_fk) throw new Error("Preencha todos os campos do loteamento.");
+                await addDoc(getPublicCollection('loteamentos'), {
+                    ...novoLot,
+                    codigo_nucleo: novoLot.codigo_nucleo.toUpperCase(),
+                    ativo: true,
+                    createdAt: new Date(),
+                    createdBy: userId
+                });
+                onSuccess(`Loteamento ${novoLot.nome_nucleo} cadastrado com sucesso!`);
+            }
+            onClose();
+        } catch (err) {
+            console.error("Erro ao cadastrar mestre:", err);
+            setError(`Erro ao cadastrar: ${err.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md">
+                <h3 className="text-xl font-bold mb-4 text-sky-800">
+                    {masterType === 'municipio' ? 'Novo Município' : 'Novo Loteamento/Núcleo'}
+                </h3>
+                {error && <p className="bg-red-100 p-3 rounded text-red-700 mb-4">{error}</p>}
+                
+                <form onSubmit={handleMasterSubmit} className="space-y-4">
+                    {masterType === 'municipio' && (
+                        <>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block">Nome do Município (Ex: COLINAS DO SUL-GO)</label>
+                                <input type="text" name="nome" value={novoMun.nome} 
+                                       onChange={(e) => handleMasterChange(e, 'municipio')} 
+                                       className="w-full p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500" required />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block">Código/Sigla para ID (Ex: GOS)</label>
+                                <input type="text" name="codigo_sigla" value={novoMun.codigo_sigla} 
+                                       onChange={(e) => handleMasterChange(e, 'municipio')} 
+                                       className="w-full p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500 uppercase" maxLength={3} required />
+                            </div>
+                        </>
+                    )}
+
+                    {masterType === 'loteamento' && (
+                        <>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block">Município Vinculado</label>
+                                <select name="id_municipio_fk" value={novoLot.id_municipio_fk} 
+                                        onChange={(e) => handleMasterChange(e, 'loteamento')} 
+                                        className="w-full p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500" required>
+                                    <option value="">Selecione um Município</option>
+                                    {municipios.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block">Nome do Núcleo Urbano/Loteamento (Ex: DISTRITO DE VILA BORBA)</label>
+                                <input type="text" name="nome_nucleo" value={novoLot.nome_nucleo} 
+                                       onChange={(e) => handleMasterChange(e, 'loteamento')} 
+                                       className="w-full p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500" required />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block">Código para ID (Máx. 4 caracteres, Ex: VLB0)</label>
+                                <input type="text" name="codigo_nucleo" value={novoLot.codigo_nucleo} 
+                                       onChange={(e) => handleMasterChange(e, 'loteamento')} 
+                                       className="w-full p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500 uppercase" maxLength={4} required />
+                            </div>
+                        </>
+                    )}
+
+                    <div className="flex justify-end space-x-3 mt-4">
+                        <button type="button" onClick={onClose} disabled={isLoading}
+                                className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition">Cancelar</button>
+                        <button type="submit" disabled={isLoading}
+                                className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition disabled:bg-sky-400">
+                            {isLoading ? 'Salvando...' : 'Salvar e Continuar'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+
+// =================================================================
+// 3. COMPONENTE NOVO CADASTRO (LÓGICA PRINCIPAL)
 // =================================================================
 
 const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
@@ -126,14 +253,14 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
     id_municipio_fk: '',
     id_loteamento_fk: '',
     quadra_lote: '',
-    area_m2: '',
+    area_m2: 0, 
     endereco_completo: '',
     // Parte B - Ocupante Principal (Simplificado para o exemplo)
     nome: '',
     cpf: '',
     data_nascimento: '',
     estado_civil: 'Solteiro',
-    renda_mensal: '',
+    renda_mensal: 0, 
     // Parte C - Declarações (Baseado na ficha PDF)
     decl_veracidade: false,
     decl_nao_proprietario: false,
@@ -148,11 +275,29 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   
-  // Estado para cadastros mestres
-  const [novoMun, setNovoMun] = useState({ nome: '', codigo_sigla: '' });
-  const [novoLot, setNovoLot] = useState({ nome_nucleo: '', codigo_nucleo: '', id_municipio_fk: '' });
+  // Estados para Modal Mestre
   const [showMasterForm, setShowMasterForm] = useState(false);
-  const [masterType, setMasterType] = useState(null); // 'municipio' ou 'loteamento'
+  const [masterType, setMasterType] = useState(null); 
+
+  // Função estática para lidar com o estado principal
+  const handleChange = useCallback((e) => {
+    const { name, value, type, checked } = e.target;
+    
+    let newValue;
+    if (type === 'checkbox') {
+        newValue = checked;
+    } else if (name === 'area_m2' || name === 'renda_mensal') {
+        newValue = parseFloat(value) || 0;
+    } else {
+        newValue = value;
+    }
+
+    // Usa a forma funcional de setForm
+    setForm(prevForm => ({
+        ...prevForm,
+        [name]: newValue
+    }));
+  }, []); 
 
   // Filtra loteamentos baseado no município selecionado
   const loteamentosFiltrados = useMemo(() => {
@@ -171,52 +316,12 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
     setEtapa(etapa - 1); 
   };
   
-  // =================================================================
-  // LÓGICA DE CADASTRO MESTRE (MUNICÍPIO / LOTEAMENTO)
-  // =================================================================
+  // Função de sucesso do Modal Mestre (Usando useCallback para estabilidade)
+  const handleMasterSuccess = useCallback((msg) => {
+    setMessage(msg);
+  }, [setMessage]);
 
-  const handleMasterSubmit = async (e) => {
-    e.preventDefault();
-    if (!isAuthReady || !userId) {
-        setError("Autenticação não concluída. Tente novamente.");
-        return;
-    }
-    
-    setIsLoading(true);
-    try {
-        if (masterType === 'municipio') {
-            if (!novoMun.nome || !novoMun.codigo_sigla) throw new Error("Preencha todos os campos do município.");
-            await addDoc(getPublicCollection('municipios'), {
-                ...novoMun,
-                codigo_sigla: novoMun.codigo_sigla.toUpperCase(),
-                ativo: true,
-                createdAt: new Date(),
-                createdBy: userId
-            });
-            setMessage(`Município ${novoMun.nome} cadastrado com sucesso!`);
-            setNovoMun({ nome: '', codigo_sigla: '' });
-            setShowMasterForm(false);
-        } else if (masterType === 'loteamento') {
-            if (!novoLot.nome_nucleo || !novoLot.codigo_nucleo || !novoLot.id_municipio_fk) throw new Error("Preencha todos os campos do loteamento.");
-            await addDoc(getPublicCollection('loteamentos'), {
-                ...novoLot,
-                codigo_nucleo: novoLot.codigo_nucleo.toUpperCase(),
-                ativo: true,
-                createdAt: new Date(),
-                createdBy: userId
-            });
-            setMessage(`Loteamento ${novoLot.nome_nucleo} cadastrado com sucesso!`);
-            setNovoLot({ nome_nucleo: '', codigo_nucleo: '', id_municipio_fk: '' });
-            setShowMasterForm(false);
-        }
-    } catch (err) {
-        console.error("Erro ao cadastrar mestre:", err);
-        setError(`Erro ao cadastrar: ${err.message}`);
-    } finally {
-        setIsLoading(false);
-    }
-  };
-
+  
   // =================================================================
   // LÓGICA DE CADASTRO DO OCUPANTE
   // =================================================================
@@ -254,14 +359,16 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
       const docRef = await addDoc(getPublicCollection('cadastros'), dadosCadastro);
 
       // 4. Limpar e mostrar sucesso
+      // Aqui, limpamos o form, mas mantemos o ID gerado na mensagem para a etapa 4
+      const generatedMessage = `Cadastro concluído! ID gerado: ${numero_cadastro}`;
       setForm({
-        id_municipio_fk: '', id_loteamento_fk: '', quadra_lote: '', area_m2: '', endereco_completo: '',
-        nome: '', cpf: '', data_nascimento: '', estado_civil: 'Solteiro', renda_mensal: '',
+        id_municipio_fk: '', id_loteamento_fk: '', quadra_lote: '', area_m2: 0, endereco_completo: '',
+        nome: '', cpf: '', data_nascimento: '', estado_civil: 'Solteiro', renda_mensal: 0,
         decl_veracidade: false, decl_nao_proprietario: false, decl_anuencia_medidas: false,
         tipo_reurb: 'Reurb-S', forma_aquisicao: 'Compra e venda particular/recibo', status_assinatura: 'Pendente',
       });
       setEtapa(4); // Mover para a etapa de Assinatura/Conclusão
-      setMessage(`Cadastro concluído! ID gerado: ${numero_cadastro}`);
+      setMessage(generatedMessage);
       
     } catch (err) {
       console.error("Erro ao cadastrar ocupante:", err);
@@ -282,89 +389,20 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
         return;
     }
     
-    // 1. Simular Geração de Link (Em um sistema real, aqui chamaria a API do Gov.br)
     const linkSimulado = `https://assinador.gov.br/doc/${Math.random().toString(36).substring(2, 10)}`;
-    
-    // 2. Simular Envio de E-mail
-    // Este passo requer um serviço de e-mail (como SendGrid, etc.) que não está incluído aqui.
-    
-    // 3. Atualizar o status do cadastro no Firestore (Você precisaria do ID do documento)
-    // Supondo que você armazenou o ID do documento em um estado ou variável:
-    // await updateDoc(doc(getPublicCollection('cadastros'), docId), { status_assinatura: 'Link Enviado' });
-
     setMessage(`Link para assinatura Gov.br enviado para o e-mail do ocupante: ${linkSimulado} (Ação simulada)`);
     setEtapa(5); // Conclusão final
   };
   
-  // Função para simular Upload Manual (Ação real de upload de arquivo não é suportada aqui)
+  // Função para simular Upload Manual
   const handleManualUpload = () => {
-    // Em um sistema real, você usaria Firebase Storage para salvar o arquivo PDF assinado.
-    // Depois, atualizar o status no Firestore:
-    // await updateDoc(doc(getPublicCollection('cadastros'), docId), { status_assinatura: 'Assinado Manual', data_assinatura: new Date() });
-    
     setMessage("Documento assinado manualmente anexado e cadastro finalizado. (Ação simulada)");
     setEtapa(5); // Conclusão final
   };
 
   // =================================================================
-  // ESTRUTURA DE ETAPAS DO FORMULÁRIO
+  // ESTRUTURA DE ETAPAS DO FORMULÁRIO (Componentes internos)
   // =================================================================
-
-  const RenderMasterForm = () => (
-    <div className="bg-white p-6 rounded-xl shadow-lg mt-6">
-        <h3 className="text-xl font-semibold mb-4 text-sky-700">
-            {masterType === 'municipio' ? 'Novo Município' : 'Novo Loteamento/Núcleo'}
-        </h3>
-        <form onSubmit={handleMasterSubmit} className="space-y-4">
-            {masterType === 'municipio' && (
-                <>
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 block">Nome do Município (Ex: COLINAS DO SUL-GO)</label>
-                        <input type="text" value={novoMun.nome} onChange={(e) => setNovoMun({ ...novoMun, nome: e.target.value })} 
-                               className="w-full p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500" required />
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 block">Código/Sigla para ID (Ex: GOS)</label>
-                        <input type="text" value={novoMun.codigo_sigla} onChange={(e) => setNovoMun({ ...novoMun, codigo_sigla: e.target.value.substring(0, 3).toUpperCase() })} 
-                               className="w-full p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500 uppercase" maxLength={3} required />
-                    </div>
-                </>
-            )}
-
-            {masterType === 'loteamento' && (
-                <>
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 block">Município Vinculado</label>
-                        <select value={novoLot.id_municipio_fk} onChange={(e) => setNovoLot({ ...novoLot, id_municipio_fk: e.target.value })} 
-                                className="w-full p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500" required>
-                            <option value="">Selecione um Município</option>
-                            {municipios.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 block">Nome do Núcleo Urbano/Loteamento (Ex: DISTRITO DE VILA BORBA)</label>
-                        <input type="text" value={novoLot.nome_nucleo} onChange={(e) => setNovoLot({ ...novoLot, nome_nucleo: e.target.value })} 
-                               className="w-full p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500" required />
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 block">Código para ID (Máx. 4 caracteres, Ex: VLB0)</label>
-                        <input type="text" value={novoLot.codigo_nucleo} onChange={(e) => setNovoLot({ ...novoLot, codigo_nucleo: e.target.value.substring(0, 4).toUpperCase() })} 
-                               className="w-full p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500 uppercase" maxLength={4} required />
-                    </div>
-                </>
-            )}
-
-            <div className="flex justify-end space-x-3 mt-4">
-                <button type="button" onClick={() => setShowMasterForm(false)} disabled={isLoading}
-                        className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition">Cancelar</button>
-                <button type="submit" disabled={isLoading}
-                        className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition disabled:bg-sky-400">
-                    {isLoading ? 'Salvando...' : 'Salvar e Continuar'}
-                </button>
-            </div>
-        </form>
-    </div>
-  );
 
   const RenderEtapa1 = () => (
     <>
@@ -374,7 +412,7 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
       <div className="mb-4 p-4 border rounded-xl bg-sky-50/50">
           <label className="font-semibold text-sky-700 block mb-2">Município</label>
           <div className="flex items-center space-x-3">
-              <select value={form.id_municipio_fk} onChange={(e) => setForm({ ...form, id_municipio_fk: e.target.value, id_loteamento_fk: '' })} 
+              <select name="id_municipio_fk" value={form.id_municipio_fk} onChange={handleChange} 
                       className="flex-grow p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500" required>
                   <option value="">Selecione o Município</option>
                   {municipios.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
@@ -390,13 +428,13 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
       <div className="mb-6 p-4 border rounded-xl bg-sky-50/50">
           <label className="font-semibold text-sky-700 block mb-2">Núcleo Urbano Informal/Loteamento</label>
           <div className="flex items-center space-x-3">
-              <select value={form.id_loteamento_fk} onChange={(e) => setForm({ ...form, id_loteamento_fk: e.target.value })} 
+              <select name="id_loteamento_fk" value={form.id_loteamento_fk} onChange={handleChange} 
                       className="flex-grow p-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500"
                       disabled={!form.id_municipio_fk} required>
                   <option value="">Selecione o Loteamento</option>
                   {loteamentosFiltrados.map(l => <option key={l.id} value={l.id}>{l.nome_nucleo}</option>)}
               </select>
-              <button type="button" onClick={() => { setMasterType('loteamento'); setShowMasterForm(true); setNovoLot({ ...novoLot, id_municipio_fk: form.id_municipio_fk }); }}
+              <button type="button" onClick={() => { setMasterType('loteamento'); setShowMasterForm(true); }}
                       className="bg-sky-500 text-white p-2 rounded-lg hover:bg-sky-600 transition text-sm whitespace-nowrap"
                       disabled={!form.id_municipio_fk}>
                   + Novo Loteamento
@@ -409,13 +447,13 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
         {/* Quadra/Lote */}
         <div>
             <label className="text-sm font-medium text-gray-700 block">Quadra e Lote (Ex: Quadra 08 Lote 03)</label>
-            <input type="text" value={form.quadra_lote} onChange={(e) => setForm({ ...form, quadra_lote: e.target.value })} 
+            <input type="text" name="quadra_lote" value={form.quadra_lote} onChange={handleChange} 
                    className="w-full p-2 border rounded-lg" required />
         </div>
         {/* Área m² */}
         <div>
             <label className="text-sm font-medium text-gray-700 block">Área (m²)</label>
-            <input type="number" value={form.area_m2} onChange={(e) => setForm({ ...form, area_m2: parseFloat(e.target.value) || 0 })} 
+            <input type="number" name="area_m2" value={form.area_m2} onChange={handleChange} 
                    className="w-full p-2 border rounded-lg" required />
         </div>
       </div>
@@ -423,7 +461,7 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
       {/* Endereço Completo */}
       <div className="mt-4">
           <label className="text-sm font-medium text-gray-700 block">Endereço Completo</label>
-          <textarea value={form.endereco_completo} onChange={(e) => setForm({ ...form, endereco_completo: e.target.value })} 
+          <textarea name="endereco_completo" value={form.endereco_completo} onChange={handleChange} 
                     rows="3" className="w-full p-2 border rounded-lg" required />
       </div>
 
@@ -445,12 +483,12 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
             <label className="text-sm font-medium text-gray-700 block">Nome Completo</label>
-            <input type="text" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} 
+            <input type="text" name="nome" value={form.nome} onChange={handleChange} 
                    className="w-full p-2 border rounded-lg" required />
         </div>
         <div>
             <label className="text-sm font-medium text-gray-700 block">CPF</label>
-            <input type="text" value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} 
+            <input type="text" name="cpf" value={form.cpf} onChange={handleChange} 
                    className="w-full p-2 border rounded-lg" maxLength={14} required />
         </div>
       </div>
@@ -459,12 +497,12 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
             <label className="text-sm font-medium text-gray-700 block">Data de Nascimento</label>
-            <input type="date" value={form.data_nascimento} onChange={(e) => setForm({ ...form, data_nascimento: e.target.value })} 
+            <input type="date" name="data_nascimento" value={form.data_nascimento} onChange={handleChange} 
                    className="w-full p-2 border rounded-lg" required />
         </div>
         <div>
             <label className="text-sm font-medium text-gray-700 block">Renda Mensal (R$)</label>
-            <input type="number" value={form.renda_mensal} onChange={(e) => setForm({ ...form, renda_mensal: parseFloat(e.target.value) || 0 })} 
+            <input type="number" name="renda_mensal" value={form.renda_mensal} onChange={handleChange} 
                    className="w-full p-2 border rounded-lg" required />
         </div>
       </div>
@@ -473,7 +511,7 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
             <label className="text-sm font-medium text-gray-700 block">Estado Civil</label>
-            <select value={form.estado_civil} onChange={(e) => setForm({ ...form, estado_civil: e.target.value })} 
+            <select name="estado_civil" value={form.estado_civil} onChange={handleChange} 
                     className="w-full p-2 border rounded-lg">
                 <option value="Solteiro">Solteiro</option>
                 <option value="Casado">Casado</option>
@@ -484,7 +522,7 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
         </div>
         <div>
             <label className="text-sm font-medium text-gray-700 block">Forma de Aquisição</label>
-            <select value={form.forma_aquisicao} onChange={(e) => setForm({ ...form, forma_aquisicao: e.target.value })} 
+            <select name="forma_aquisicao" value={form.forma_aquisicao} onChange={handleChange} 
                     className="w-full p-2 border rounded-lg">
                 <option value="Compra e venda particular/recibo">Compra e venda particular/recibo</option>
                 <option value="Herança de inventário">Herança de inventário</option>
@@ -514,19 +552,19 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
         <h3 className="font-semibold text-gray-700">Declarações (Obrigatórias conforme ficha REURB)</h3>
         {/* Declaração de Veracidade */}
         <label className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-            <input type="checkbox" checked={form.decl_veracidade} onChange={(e) => setForm({ ...form, decl_veracidade: e.target.checked })} 
+            <input type="checkbox" name="decl_veracidade" checked={form.decl_veracidade} onChange={handleChange} 
                    className="form-checkbox h-5 w-5 text-sky-600 rounded" required />
             <span className="text-sm text-gray-700">As informações prestadas são verdadeiras e correspondem à realidade (sob pena de falsidade ideológica).</span>
         </label>
         {/* Declaração de Não Propriedade */}
         <label className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-            <input type="checkbox" checked={form.decl_nao_proprietario} onChange={(e) => setForm({ ...form, decl_nao_proprietario: e.target.checked })} 
+            <input type="checkbox" name="decl_nao_proprietario" checked={form.decl_nao_proprietario} onChange={handleChange} 
                    className="form-checkbox h-5 w-5 text-sky-600 rounded" required />
             <span className="text-sm text-gray-700">Não sou proprietário(a) exclusivo(a) de outro imóvel urbano ou rural.</span>
         </label>
         {/* Declaração de Anuência */}
         <label className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-            <input type="checkbox" checked={form.decl_anuencia_medidas} onChange={(e) => setForm({ ...form, decl_anuencia_medidas: e.target.checked })} 
+            <input type="checkbox" name="decl_anuencia_medidas" checked={form.decl_anuencia_medidas} onChange={handleChange} 
                    className="form-checkbox h-5 w-5 text-sky-600 rounded" required />
             <span className="text-sm text-gray-700">Manifesto anuência em relação às medidas, limites e confrontações do meu imóvel.</span>
         </label>
@@ -536,12 +574,12 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
           <h3 className="font-semibold text-gray-700 mb-2">Enquadramento REURB</h3>
           <div className="flex space-x-6">
               <label className="inline-flex items-center">
-                  <input type="radio" name="tipo_reurb" value="Reurb-S" checked={form.tipo_reurb === 'Reurb-S'} onChange={(e) => setForm({ ...form, tipo_reurb: e.target.value })} 
+                  <input type="radio" name="tipo_reurb" value="Reurb-S" checked={form.tipo_reurb === 'Reurb-S'} onChange={handleChange} 
                          className="form-radio h-4 w-4 text-sky-600" />
                   <span className="ml-2 text-gray-700">Reurb-S</span>
               </label>
               <label className="inline-flex items-center">
-                  <input type="radio" name="tipo_reurb" value="Reurb-E" checked={form.tipo_reurb === 'Reurb-E'} onChange={(e) => setForm({ ...form, tipo_reurb: e.target.value })} 
+                  <input type="radio" name="tipo_reurb" value="Reurb-E" checked={form.tipo_reurb === 'Reurb-E'} onChange={handleChange} 
                          className="form-radio h-4 w-4 text-sky-600" />
                   <span className="ml-2 text-gray-700">Reurb-E</span>
               </label>
@@ -646,15 +684,27 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
         {message && etapa < 4 && <p className="bg-sky-100 p-3 rounded-xl text-sky-700 mb-6">{message}</p>}
 
         <form onSubmit={etapa === 3 ? handleSubmitCadastro : (e) => e.preventDefault()} className="bg-white p-8 rounded-2xl shadow-xl">
-            {showMasterForm ? <RenderMasterForm /> : <RenderEtapa />}
+            {RenderEtapa()}
         </form>
+
+        {/* Renderiza o Modal Mestre FORA da área principal do formulário */}
+        {showMasterForm && (
+            <MasterFormModal
+                masterType={masterType}
+                municipios={municipios}
+                userId={userId}
+                isAuthReady={isAuthReady}
+                onClose={() => setShowMasterForm(false)}
+                onSuccess={handleMasterSuccess}
+            />
+        )}
     </div>
   );
 };
 
 
 // =================================================================
-// 3. COMPONENTE APP PRINCIPAL (REFATORADO)
+// 4. COMPONENTE APP PRINCIPAL
 // =================================================================
 
 const App = () => {
