@@ -1,6 +1,6 @@
-import "./index.css";
 import React, { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
+
 import Dashboard from "./pages/Dashboard";
 import NovoCadastro from "./pages/NovoCadastro";
 import Consultar from "./pages/Consultar";
@@ -44,92 +44,89 @@ const App = () => {
     });
   }, []);
 
-const LoginScreen = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  // Tela de Login
+  const LoginScreen = () => {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [message, setMessage] = useState("");
 
-  const login = async (e) => {
-    e.preventDefault();
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      setError("E-mail ou senha incorretos.");
-    }
-  };
+    const login = async (e) => {
+      e.preventDefault();
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        setError("E-mail ou senha incorretos.");
+      }
+    };
 
-  const forgotPassword = async () => {
-    if (!email) return setError("Digite seu e-mail para recuperar a senha.");
-    try {
-      await sendPasswordResetEmail(auth, email);
-      setMessage("E-mail enviado! Verifique sua caixa de entrada.");
-    } catch (err) {
-      setError("Erro ao enviar e-mail de recuperação.");
-    }
-  };
+    const forgotPassword = async () => {
+      if (!email) return setError("Digite seu e-mail para recuperar a senha.");
+      try {
+        await sendPasswordResetEmail(auth, email);
+        setMessage("E-mail enviado! Verifique sua caixa de entrada.");
+      } catch (err) {
+        setError("Erro ao enviar e-mail de recuperação.");
+      }
+    };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md">
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md">
+          <h1 className="text-2xl font-bold text-sky-800 mb-6 text-center">
+            Acesso ao Sistema REURB
+          </h1>
 
-        <h1 className="text-3xl font-bold text-sky-800 text-center mb-6">
-          Acesso ao Sistema REURB
-        </h1>
+          {error && <p className="bg-red-100 p-3 rounded text-red-600">{error}</p>}
+          {message && <p className="bg-sky-100 p-3 rounded text-sky-700">{message}</p>}
 
-        {error && (
-          <p className="bg-red-100 text-red-700 p-3 rounded mb-2">
-            {error}
-          </p>
-        )}
+          <form className="space-y-4" onSubmit={login}>
+            <div>
+              <label className="text-sm text-gray-600 block">E-mail</label>
+              <input
+                type="email"
+                className="w-full p-2 border rounded"
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-        {message && (
-          <p className="bg-sky-100 text-sky-700 p-3 rounded mb-2">
-            {message}
-          </p>
-        )}
+            <div>
+              <label className="text-sm text-gray-600 block">Senha</label>
+              <input
+                type="password"
+                className="w-full p-2 border rounded"
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
 
-        <form onSubmit={login} className="space-y-4">
-
-          <div>
-            <label className="text-gray-600 font-medium text-sm">E-mail</label>
-            <input
-              type="email"
-              className="w-full mt-1 p-2 border rounded-lg focus:ring focus:ring-sky-200"
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-gray-600 font-medium text-sm">Senha</label>
-            <input
-              type="password"
-              className="w-full mt-1 p-2 border rounded-lg focus:ring focus:ring-sky-200"
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+            <button
+              type="submit"
+              className="w-full bg-sky-600 text-white py-2 rounded hover:bg-sky-700"
+            >
+              Entrar
+            </button>
+          </form>
 
           <button
-            type="submit"
-            className="w-full bg-sky-600 text-white py-2 rounded-lg hover:bg-sky-700 transition"
+            onClick={forgotPassword}
+            className="text-sm text-sky-600 mt-4 w-full text-center"
           >
-            Entrar
+            Esqueci minha senha
           </button>
-        </form>
-
-        <button
-          onClick={forgotPassword}
-          className="w-full mt-4 text-sm text-sky-600 hover:underline"
-        >
-          Esqueci minha senha
-        </button>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
+  // Enquanto carrega o estado do usuário
+  if (loading) return <div>Carregando...</div>;
+
+  // Se NÃO estiver logado, mostra o login
+  if (!user) return <LoginScreen />;
+
+  // Se estiver logado, mostra o sistema
   return (
     <div className="app">
       <Sidebar page={page} setPage={setPage} logout={() => signOut(auth)} />
@@ -147,9 +144,3 @@ const LoginScreen = () => {
 };
 
 export default App;
-
-
-
-
-
-
