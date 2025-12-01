@@ -265,7 +265,13 @@ const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) =>
             setError("Falha ao carregar dados do Firestore. Verifique as regras de segurança.");
             setLoading(false);
         });
-
+        {isEditModalOpen && selectedRegistration && (
+            <EditModal 
+                data={selectedRegistration} 
+                onClose={() => setIsEditModalOpen(false)} 
+                onSave={handleSaveEdit} 
+            />
+        )}
         return () => unsubscribe();
     }, [isAuthReady, userId]);
 
@@ -338,6 +344,108 @@ const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) =>
         }
     };
 
+
+// -----------------------------------------------------------------------------
+// NOVO COMPONENTE: MODAL DE EDIÇÃO (Simplificado)
+// -----------------------------------------------------------------------------
+function EditModal({ data, onClose, onSave }) {
+    // Inicializa o estado com os dados recebidos para edição
+    const [formData, setFormData] = React.useState(data);
+    const [isLoading, setIsLoading] = React.useState(false);
+
+    // Simplificação do handleChange (como no NovoCadastro)
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        let newValue = type === 'checkbox' ? checked : value;
+        setFormData(prev => ({ ...prev, [name]: newValue }));
+    };
+
+    const handleSave = async () => {
+        setIsLoading(true);
+        // Oculta campos de controle internos para não serem salvos no banco
+        const { id, createdAt, createdBy, numero_cadastro_prefixo, ...dataToSave } = formData;
+        
+        // Garante que os números sejam salvos como números
+        dataToSave.area_m2 = parseFloat(dataToSave.area_m2 || 0);
+        dataToSave.renda_mensal = parseFloat(dataToSave.renda_mensal || 0);
+        dataToSave.conjuge_renda_mensal = parseFloat(dataToSave.conjuge_renda_mensal || 0);
+        dataToSave.renda_familiar_total = dataToSave.renda_mensal + dataToSave.conjuge_renda_mensal;
+
+        try {
+            await onSave(dataToSave, id); // Chama a função de salvamento principal
+            onClose();
+        } catch (error) {
+            console.error("Erro ao salvar no modal:", error);
+            alert("Erro ao salvar: " + error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+                <h3 className="text-xl font-bold mb-4 text-sky-800 border-b pb-2">
+                    Editar Cadastro: <span className="text-gray-700">{formData.numero_cadastro}</span>
+                </h3>
+                
+                <div className="space-y-4">
+                    {/* Exemplo de Campos Editáveis: Nome e CPF */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 block">Nome do Ocupante</label>
+                            <input type="text" name="nome" value={formData.nome || ''} onChange={handleChange} 
+                                className="w-full p-2 border rounded-lg" required />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 block">CPF</label>
+                            <input type="text" name="cpf" value={formData.cpf || ''} onChange={handleChange} 
+                                className="w-full p-2 border rounded-lg" maxLength={14} required />
+                        </div>
+                    </div>
+                    {/* Exemplo de Campos do Imóvel */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 block">Quadra e Lote</label>
+                            <input type="text" name="quadra_lote" value={formData.quadra_lote || ''} onChange={handleChange} 
+                                className="w-full p-2 border rounded-lg" required />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 block">Área (m²)</label>
+                            <input type="number" name="area_m2" value={formData.area_m2 || 0} onChange={handleChange} 
+                                className="w-full p-2 border rounded-lg" required />
+                        </div>
+                    </div>
+                    
+                    {/* Status da Assinatura (Campo de Controle Importante) */}
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block">Status da Assinatura</label>
+                        <select name="status_assinatura" value={formData.status_assinatura || 'Pendente'} onChange={handleChange} 
+                            className="w-full p-2 border rounded-lg">
+                            <option value="Pendente">Pendente</option>
+                            <option value="Assinado Gov.br">Assinado Gov.br</option>
+                            <option value="Assinado Manual">Assinado Manual</option>
+                            <option value="Revisão Necessária">Revisão Necessária</option>
+                        </select>
+                    </div>
+                    
+                    {/* ADICIONE MAIS CAMPOS IMPORTANTES AQUI (Endereço, Renda, etc) */}
+                </div>
+                
+                <div className="flex justify-end space-x-3 mt-6">
+                    <button type="button" onClick={onClose} disabled={isLoading}
+                        className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition">Cancelar</button>
+                    <button onClick={handleSave} disabled={isLoading}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:bg-green-400">
+                        {isLoading ? 'Salvando...' : 'Salvar Alterações'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+// -----------------------------------------------------------------------------
+    
 
     // Placeholder para função de Relatório (Ação simulada)
     const handleGenerateReport = (type) => {
@@ -510,6 +618,18 @@ const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) =>
                                             onClick={() => console.log(`Visualizando detalhes do ID: ${c.numero_cadastro}`, c)} 
                                             className="text-sky-600 hover:text-sky-900 text-sm">
                                             Detalhes
+                                        </button>
+                                        <button 
+                                            // Substituído o console.log por uma função de edição
+                                        onClick={() => handleEditClick(c)} 
+                                            className="text-white bg-sky-500 hover:bg-sky-600 text-sm py-1 px-2 rounded mr-2">
+                                            Editar
+                                        </button>
+                                        <button 
+                                            // Adicionado botão de Excluir
+                                            onClick={() => handleDelete(c.id, c.nome)} 
+                                            className="text-white bg-red-600 hover:bg-red-700 text-sm py-1 px-2 rounded">
+                                            Excluir
                                         </button>
                                     </td>
                                 </tr>
@@ -1462,3 +1582,4 @@ const App = () => {
 };
 
 export default App;
+
