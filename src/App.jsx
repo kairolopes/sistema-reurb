@@ -22,25 +22,11 @@ import {
     getDocs, 
     doc, 
     updateDoc,
-    deleteDoc, // ✅ FUNÇÃO DE EXCLUSÃO IMPORTADA
-    where
+    deleteDoc, // ✅ FUNÇÃO DE EXCLUSÃO
+    where,
+    arrayUnion // ✅ FUNÇÃO PARA LOGS DE TICKET
 } from "firebase/firestore";
 import { setLogLevel } from "firebase/firestore";
-
-import { 
-    getFirestore, 
-    collection, 
-    query, 
-    onSnapshot, 
-    addDoc, 
-    getDocs, 
-    doc, 
-    updateDoc,
-    deleteDoc, 
-    where,
-    // ADICIONE AQUI:
-    arrayUnion 
-} from "firebase/firestore";
 
 
 // Configuração Firebase (Deve usar a variável global do ambiente)
@@ -54,7 +40,7 @@ const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__f
     messagingSenderId: "444345727490",
     appId: "1:444345727490:web:5d9e6dba923781ba91451b",
 };
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? initialAuthToken : null;
 
 // Inicialização de App e Services
 const app = initializeApp(firebaseConfig);
@@ -67,6 +53,7 @@ const getPublicCollection = (collectionName) => {
     // Assume que as regras de segurança permitem leitura/escrita para usuários autenticados
     return collection(db, `/artifacts/${appId}/public/data/${collectionName}`);
 };
+
 
 // =================================================================
 // 1. LÓGICA DE GERAÇÃO DE ID SEQUENCIAL
@@ -1815,3 +1802,4 @@ const App = () => {
 };
 
 export default App;
+
