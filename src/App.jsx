@@ -27,6 +27,21 @@ import {
 } from "firebase/firestore";
 import { setLogLevel } from "firebase/firestore";
 
+import { 
+    getFirestore, 
+    collection, 
+    query, 
+    onSnapshot, 
+    addDoc, 
+    getDocs, 
+    doc, 
+    updateDoc,
+    deleteDoc, 
+    where,
+    // ADICIONE AQUI:
+    arrayUnion 
+} from "firebase/firestore";
+
 
 // Configuração Firebase (Deve usar a variável global do ambiente)
 // Variáveis Globais (Assumidas como disponíveis no ambiente Canvas)
@@ -1414,7 +1429,122 @@ const NovoCadastro = ({ municipios, loteamentos, userId, isAuthReady }) => {
 
 
 // =================================================================
-// 5. COMPONENTE APP PRINCIPAL
+// NOVO COMPONENTE: TICKETS / GESTÃO DE PENDÊNCIAS
+// =================================================================
+
+const Tickets = ({ allCadastros, handleSaveEdit }) => {
+    
+    // Filtra apenas os cadastros que precisam de ação
+    const cadastrosPendentes = useMemo(() => {
+        return allCadastros.filter(c => 
+            c.status_assinatura === 'Pendente' || c.status_assinatura === 'Revisão Necessária'
+        ).sort((a, b) => {
+            // Ordena os mais antigos (com maior tempo de pendência) primeiro
+            if (a.createdAt && b.createdAt) {
+                return a.createdAt.toDate() - b.createdAt.toDate();
+            }
+            return 0;
+        });
+    }, [allCadastros]);
+
+    // Simula o envio de um lembrete (e atualiza o status para 'Revisão Necessária' como log)
+    const handleSendReminder = async (cadastro) => {
+        
+        const confirmSend = window.confirm(`Deseja ENVIAR um lembrete de pendência para ${cadastro.nome}?`);
+        
+        if (confirmSend) {
+            try {
+                const docId = cadastro.id;
+                const docRef = doc(db, `/artifacts/${appId}/public/data/cadastros`, docId);
+                
+                // Atualiza o status para sinalizar que o lembrete foi enviado
+                await updateDoc(docRef, { 
+                    status_assinatura: 'Revisão Necessária', // Mudo para um status mais crítico
+                    ultima_comunicacao: new Date(),
+                    log_comunicacao: arrayUnion(`Lembrete enviado em ${new Date().toLocaleDateString('pt-BR')}`)
+                });
+                
+                alert(`Lembrete enviado para ${cadastro.nome}! Status atualizado para 'Revisão Necessária'.`);
+                // O onSnapshot recarrega a lista automaticamente
+                
+            } catch (e) {
+                console.error("Erro ao enviar lembrete e atualizar status: ", e);
+                alert("Falha ao processar o lembrete. Verifique o console.");
+            }
+        }
+    };
+
+    if (cadastrosPendentes.length === 0) {
+        return (
+            <div className="bg-white p-8 rounded-xl shadow-xl min-h-[calc(100vh-64px)] text-center">
+                <h1 className="text-3xl font-extrabold text-sky-800 mb-6">Gestão de Pendências (Tickets)</h1>
+                <p className="mt-10 text-xl text-green-600">🎉 Parabéns! Não há cadastros pendentes de ação imediata.</p>
+                <p className="text-gray-500 mt-3">Todos os processos estão aguardando andamento natural ou já foram concluídos.</p>
+            </div>
+        );
+    }
+
+
+    return (
+        <div className="bg-white p-8 rounded-2xl shadow-xl min-h-[calc(100vh-64px)]">
+            <h1 className="text-3xl font-extrabold text-sky-800 mb-6 border-b pb-4">Gestão de Pendências (Tickets)</h1>
+            
+            <p className="mb-4 text-lg font-medium text-red-700">⚠️ {cadastrosPendentes.length} Cadastros Requerem Ação Imediata (Assinatura ou Revisão)</p>
+
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-red-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Prioridade</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">ID Cadastro / Nome</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status Atual</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {cadastrosPendentes.map((c, index) => (
+                            <tr key={c.id} className="hover:bg-red-50/50">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${index < 5 ? 'bg-red-200 text-red-900' : 'bg-yellow-100 text-yellow-800'}`}>
+                                        {index < 5 ? 'ALTA' : 'MÉDIA'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {c.numero_cadastro}
+                                    <span className="text-xs text-gray-500 block">{c.nome}</span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${c.status_assinatura === 'Pendente' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                        {c.status_assinatura}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button
+                                        onClick={() => handleSendReminder(c)}
+                                        className="text-white bg-sky-600 hover:bg-sky-700 py-1 px-3 rounded text-xs mr-2"
+                                    >
+                                        Enviar Lembrete (Email)
+                                    </button>
+                                    <button
+                                        onClick={() => alert("Simulando abertura do modal de edição para resolver pendências.")}
+                                        className="text-sky-600 hover:text-sky-800 text-xs"
+                                    >
+                                        Ver Detalhes/Resolver
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
+
+
+// =================================================================
+// 5. COMPONENTE APP PRINCIPAL (CORRIGIDO)
 // =================================================================
 
 const App = () => {
@@ -1427,6 +1557,10 @@ const App = () => {
     const [municipios, setMunicipios] = useState([]);
     const [loteamentos, setLoteamentos] = useState([]);
     const [userId, setUserId] = useState(null);
+
+    // Estados para obter a lista completa de cadastros
+    const [allCadastros, setAllCadastros] = useState([]);
+    const [loadingCadastros, setLoadingCadastros] = useState(true);
     
     // Função para obter o usuário
     const getUserId = (currentUser) => currentUser?.uid || crypto.randomUUID();
@@ -1492,6 +1626,27 @@ const App = () => {
             unsubscribeLot();
         };
     }, [isAuthReady, userId]); // Depende da conclusão da autenticação
+
+    // ✅ NOVO: Listener de Cadastros para Dashboard, Consulta e Relatórios
+    useEffect(() => {
+        if (!isAuthReady || !userId) return;
+
+        const cadastrosCol = getPublicCollection('cadastros');
+        const unsubscribeCadastros = onSnapshot(cadastrosCol, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setAllCadastros(data);
+            setLoadingCadastros(false);
+        }, (error) => {
+            console.error("Erro ao carregar todos os cadastros:", error);
+            setLoadingCadastros(false);
+        });
+
+        return () => {
+            // Cleanup dos listeners
+            unsubscribeCadastros();
+        };
+    }, [isAuthReady, userId]); 
+
 
     // Placeholder para Sidebar (simplificado para App.jsx)
     const Sidebar = ({ page, setPage, userId }) => (
@@ -1617,21 +1772,41 @@ const App = () => {
             <Sidebar page={page} setPage={setPage} userId={userId} />
 
             <main className="authenticated flex-grow p-8 bg-gray-50 ml-64">
-                {page === "dashboard" && <PagePlaceholder title="Dashboard" />}
+                
+                {/* ✅ DASHBOARD */}
+                {page === "dashboard" && <Dashboard 
+                    municipios={municipios}
+                    loteamentos={loteamentos}
+                    allCadastros={allCadastros}
+                    loadingCadastros={loadingCadastros}
+                />}
+                
                 {page === "novo" && <NovoCadastro 
                     municipios={municipios} 
                     loteamentos={loteamentos} 
                     userId={userId} 
                     isAuthReady={isAuthReady} 
                 />}
+                
                 {page === "consultar" && <ConsultarCadastros
                     municipios={municipios}
                     loteamentos={loteamentos}
                     userId={userId}
                     isAuthReady={isAuthReady}
                 />}
-                {page === "relatorios" && <PagePlaceholder title="Relatórios" />}
-                {page === "tickets" && <PagePlaceholder title="Tickets" />}
+                
+                {/* ✅ RELATÓRIOS */}
+                {page === "relatorios" && <Relatorios 
+                    municipios={municipios}
+                    loteamentos={loteamentos}
+                    allCadastros={allCadastros}
+                />}
+                
+                {/* ✅ TICKETS (CORRIGIDO) */}
+                {page === "tickets" && <Tickets 
+                    allCadastros={allCadastros} 
+                />}
+                
                 {page === "config" && <PagePlaceholder title="Configurações" />}
             </main>
             
