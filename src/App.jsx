@@ -235,7 +235,7 @@ const MasterFormModal = ({ masterType, municipios, userId, isAuthReady, onClose,
 };
 
 // =================================================================
-// 3. COMPONENTE DE CONSULTA DE CADASTROS (NOVO)
+// 3. COMPONENTE DE CONSULTA DE CADASTROS (CORRIGIDO E COMPLETO)
 // =================================================================
 
 const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) => {
@@ -249,13 +249,57 @@ const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) =>
     const [filterLoteamento, setFilterLoteamento] = useState('');
     const [filterReurb, setFilterReurb] = useState('');
 
+    // ESTADOS PARA EDIÇÃO E MODAL (NOVO)
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedRegistration, setSelectedRegistration] = useState(null);
+    
+    // FUNÇÕES DE MANIPULAÇÃO DO FIREBASE (NOVO)
+    
+    // 1. Salva a edição no Firestore
+    const handleSaveEdit = async (updatedData, docId) => {
+        try {
+            // Referência à coleção correta de cadastros
+            const docRef = doc(db, `/artifacts/${appId}/public/data/cadastros`, docId);
+            
+            await updateDoc(docRef, { 
+                ...updatedData, 
+                updatedAt: new Date(),
+                updatedBy: userId 
+            });
+            alert("Cadastro atualizado com sucesso!");
+        } catch (e) {
+            console.error("Erro ao atualizar o documento: ", e);
+            throw new Error("Falha ao atualizar o cadastro.");
+        }
+    };
+
+    // 2. Exclui o cadastro
+    const handleDelete = async (regId, regNome) => {
+        if (window.confirm(`Tem certeza que deseja EXCLUIR o cadastro de "${regNome}"? Esta ação é IRREVERSÍVEL.`)) {
+            try {
+                await deleteDoc(doc(db, `/artifacts/${appId}/public/data/cadastros`, regId));
+                alert("Cadastro excluído com sucesso.");
+            } catch (e) {
+                console.error("Erro ao excluir o documento: ", e);
+                alert("Erro ao excluir o cadastro. Verifique as permissões.");
+            }
+        }
+    };
+    
+    // 3. Abre o modal de edição
+    const handleEditClick = (reg) => {
+        setSelectedRegistration(reg);
+        setIsEditModalOpen(true);
+    };
+
+
     // Busca de Dados (useEffect)
     useEffect(() => {
         if (!isAuthReady || !userId) return;
 
         const cadastrosCol = getPublicCollection('cadastros');
         
-        // Usamos onSnapshot para real-time updates e para simplificar o fetch
+        // CORREÇÃO: Removido o bloco de modal que estava causando o erro de sintaxe aqui.
         const unsubscribe = onSnapshot(cadastrosCol, (snapshot) => {
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setAllCadastros(data);
@@ -265,17 +309,11 @@ const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) =>
             setError("Falha ao carregar dados do Firestore. Verifique as regras de segurança.");
             setLoading(false);
         });
-        {isEditModalOpen && selectedRegistration && (
-            <EditModal 
-                data={selectedRegistration} 
-                onClose={() => setIsEditModalOpen(false)} 
-                onSave={handleSaveEdit} 
-            />
-        )}
+
         return () => unsubscribe();
     }, [isAuthReady, userId]);
 
-    // Lógica de Filtragem
+    // Lógica de Filtragem (MANTIDA)
     const cadastrosFiltrados = useMemo(() => {
         let filtered = allCadastros;
 
@@ -345,6 +383,213 @@ const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) =>
     };
 
 
+    // Placeholder para função de Relatório (Ação simulada)
+    const handleGenerateReport = (type) => {
+        // Simulação simples de relatório
+        const reportData = cadastrosFiltrados.map(c => ({
+            "ID Cadastro": c.numero_cadastro,
+            "Ocupante": c.nome,
+            "CPF Ocupante": c.cpf,
+            "Município": getMunicipioNome(c.id_municipio_fk),
+            "Núcleo Urbano": getLoteamentoNome(c.id_loteamento_fk),
+            "Quadra/Lote": c.quadra_lote,
+            "Tipo REURB": c.tipo_reurb,
+            // CORREÇÃO: Acessa renda familiar total corretamente
+            "Renda Familiar Total": parseFloat(c.renda_familiar_total || c.renda_mensal || 0).toFixed(2), 
+            "Status Assinatura": c.status_assinatura,
+            // CORREÇÃO: Usa a função formatCadastroDate para segurança
+            "Data Cadastro": formatCadastroDate(c.createdAt),
+        }));
+
+        if (reportData.length === 0) {
+            console.error("Não há dados para gerar o relatório.");
+            // Usar um modal em vez de alert
+            document.getElementById('report-message').innerText = "Não há dados para gerar o relatório com os filtros atuais.";
+            return;
+        }
+
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + Object.keys(reportData[0]).join(";") + "\n"
+            + reportData.map(e => Object.values(e).join(";")).join("\n");
+
+        // Cria e clica em um link invisível para download
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `${type.replace(/ /g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        document.getElementById('report-message').innerText = `Relatório "${type}" gerado com sucesso!`;
+    };
+
+
+    return (
+        <div className="bg-white p-8 rounded-2xl shadow-xl min-h-[calc(100vh-64px)]">
+            <h1 className="text-3xl font-extrabold text-sky-800 mb-6 border-b pb-4">Consultar Cadastros REURB</h1>
+            
+            {error && <p className="bg-red-100 p-3 rounded-xl text-red-700 mb-6">{error}</p>}
+
+            {/* BARRA DE PESQUISA E FILTROS */}
+            <div className="space-y-4 mb-6 p-4 border rounded-xl bg-gray-50">
+                <input
+                    type="text"
+                    placeholder="Pesquisar por Nome, CPF, ID, Quadra/Lote ou Endereço (Ocupante/Cônjuge)..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 transition"
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Filtro Município */}
+                    <select
+                        value={filterMunicipio}
+                        onChange={(e) => {
+                            setFilterMunicipio(e.target.value);
+                            setFilterLoteamento(''); // Limpa o loteamento ao trocar o município
+                        }}
+                        className="p-3 border border-gray-300 rounded-lg"
+                    >
+                        <option value="">Filtrar por Município (Todos)</option>
+                        {municipios.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
+                    </select>
+
+                    {/* Filtro Loteamento */}
+                    <select
+                        value={filterLoteamento}
+                        onChange={(e) => setFilterLoteamento(e.target.value)}
+                        className="p-3 border border-gray-300 rounded-lg"
+                        disabled={!filterMunicipio}
+                    >
+                        <option value="">Filtrar por Loteamento (Todos)</option>
+                        {loteamentosDisponiveis.map(l => <option key={l.id} value={l.id}>{l.nome_nucleo}</option>)}
+                    </select>
+
+                    {/* Filtro REURB */}
+                    <select
+                        value={filterReurb}
+                        onChange={(e) => setFilterReurb(e.target.value)}
+                        className="p-3 border border-gray-300 rounded-lg"
+                    >
+                        <option value="">Filtrar por Tipo REURB (Todos)</option>
+                        <option value="Reurb-S">Reurb-S</option>
+                        <option value="Reurb-E">Reurb-E</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* BOTÕES DE RELATÓRIOS */}
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6 border-b pb-4">
+                <button 
+                    onClick={() => handleGenerateReport('Listagem_Completa')}
+                    className="flex-1 min-w-[200px] px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold"
+                    disabled={cadastrosFiltrados.length === 0}
+                >
+                    Exportar Listagem Atual ({cadastrosFiltrados.length})
+                </button>
+                <button 
+                    onClick={() => handleGenerateReport('Relatorio_por_Municipio')}
+                    className="flex-1 min-w-[200px] px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold"
+                    disabled={cadastrosFiltrados.length === 0}
+                >
+                    Relatório por Município (CSV)
+                </button>
+                <button 
+                    onClick={() => handleGenerateReport('Relatorio_Renda_Familiar')}
+                    className="flex-1 min-w-[200px] px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold"
+                    disabled={cadastrosFiltrados.length === 0}
+                >
+                    Relatório Renda Familiar (CSV)
+                </button>
+                <div id="report-message" className="w-full text-center p-2 text-sm text-sky-700 font-medium mt-2"></div>
+
+            </div>
+
+
+            {/* RESULTADOS DA CONSULTA */}
+            <h2 className="text-xl font-bold text-gray-700 mb-4">
+                Resultados ({cadastrosFiltrados.length} encontrados)
+            </h2>
+            
+            {loading ? (
+                <p className="text-center p-8 text-gray-500 border rounded-xl">Carregando cadastros...</p>
+            ) : (
+                <div className="overflow-x-auto rounded-lg border shadow-sm">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">ID Cadastro</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Ocupante Principal (CPF)</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Núcleo Urbano / Quadra</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">Tipo REURB / Renda</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {cadastrosFiltrados.map((c) => (
+                                <tr key={c.id} className="hover:bg-gray-50 transition">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-sky-700">{c.numero_cadastro}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {c.nome} <span className="text-xs text-gray-500 block">({c.cpf})</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                        <span className="font-medium">{getMunicipioNome(c.id_municipio_fk)} / {getLoteamentoNome(c.id_loteamento_fk)}</span>
+                                        <span className="text-xs text-gray-400 block">{c.quadra_lote}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${c.tipo_reurb === 'Reurb-S' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                            {c.tipo_reurb}
+                                        </span>
+                                        <span className="text-xs text-gray-500 block">R$ {parseFloat(c.renda_familiar_total || c.renda_mensal || 0).toFixed(2)}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${c.status_assinatura === 'Pendente' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                                            {c.status_assinatura}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button 
+                                            onClick={() => console.log(`Visualizando detalhes do ID: ${c.numero_cadastro}`, c)} 
+                                            className="text-sky-600 hover:text-sky-900 text-sm">
+                                            Detalhes
+                                        </button>
+                                        {/* BOTOES DE AÇÃO */}
+                                        <button 
+                                            onClick={() => handleEditClick(c)} 
+                                            className="text-white bg-sky-500 hover:bg-sky-600 text-sm py-1 px-2 rounded mr-2">
+                                            Editar
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDelete(c.id, c.nome)} 
+                                            className="text-white bg-red-600 hover:bg-red-700 text-sm py-1 px-2 rounded">
+                                            Excluir
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+            
+            {cadastrosFiltrados.length === 0 && !loading && (
+                <p className="text-center text-gray-500 p-8 border rounded-xl">Nenhum cadastro encontrado com os filtros aplicados.</p>
+            )}
+
+            {/* RENDERIZAÇÃO CORRETA DO MODAL */}
+            {isEditModalOpen && selectedRegistration && (
+                <EditModal 
+                    data={selectedRegistration} 
+                    onClose={() => setIsEditModalOpen(false)} 
+                    onSave={handleSaveEdit} 
+                />
+            )}
+
+        </div>
+    );
+};
+
 // -----------------------------------------------------------------------------
 // NOVO COMPONENTE: MODAL DE EDIÇÃO (Simplificado)
 // -----------------------------------------------------------------------------
@@ -372,7 +617,8 @@ function EditModal({ data, onClose, onSave }) {
         dataToSave.renda_familiar_total = dataToSave.renda_mensal + dataToSave.conjuge_renda_mensal;
 
         try {
-            await onSave(dataToSave, id); // Chama a função de salvamento principal
+            // data.id contém o ID do Firebase
+            await onSave(dataToSave, data.id); 
             onClose();
         } catch (error) {
             console.error("Erro ao salvar no modal:", error);
@@ -390,7 +636,7 @@ function EditModal({ data, onClose, onSave }) {
                 </h3>
                 
                 <div className="space-y-4">
-                    {/* Exemplo de Campos Editáveis: Nome e CPF */}
+                    {/* Linha 1: Nome e CPF */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="text-sm font-medium text-gray-700 block">Nome do Ocupante</label>
@@ -403,8 +649,15 @@ function EditModal({ data, onClose, onSave }) {
                                 className="w-full p-2 border rounded-lg" maxLength={14} required />
                         </div>
                     </div>
-                    {/* Exemplo de Campos do Imóvel */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* Linha 2: Endereço */}
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block">Endereço Completo</label>
+                        <textarea name="endereco_completo" value={formData.endereco_completo || ''} onChange={handleChange} 
+                            rows="3" className="w-full p-2 border rounded-lg" required />
+                    </div>
+
+                    {/* Linha 3: Imóvel e Renda */}
+                    <div className="grid grid-cols-3 gap-4">
                         <div>
                             <label className="text-sm font-medium text-gray-700 block">Quadra e Lote</label>
                             <input type="text" name="quadra_lote" value={formData.quadra_lote || ''} onChange={handleChange} 
@@ -415,9 +668,14 @@ function EditModal({ data, onClose, onSave }) {
                             <input type="number" name="area_m2" value={formData.area_m2 || 0} onChange={handleChange} 
                                 className="w-full p-2 border rounded-lg" required />
                         </div>
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 block">Renda Mensal Ocupante (R$)</label>
+                            <input type="number" name="renda_mensal" value={formData.renda_mensal || 0} onChange={handleChange} 
+                                className="w-full p-2 border rounded-lg" />
+                        </div>
                     </div>
                     
-                    {/* Status da Assinatura (Campo de Controle Importante) */}
+                    {/* Linha 4: Status da Assinatura (Campo de Controle Importante) */}
                     <div>
                         <label className="text-sm font-medium text-gray-700 block">Status da Assinatura</label>
                         <select name="status_assinatura" value={formData.status_assinatura || 'Pendente'} onChange={handleChange} 
@@ -428,8 +686,6 @@ function EditModal({ data, onClose, onSave }) {
                             <option value="Revisão Necessária">Revisão Necessária</option>
                         </select>
                     </div>
-                    
-                    {/* ADICIONE MAIS CAMPOS IMPORTANTES AQUI (Endereço, Renda, etc) */}
                 </div>
                 
                 <div className="flex justify-end space-x-3 mt-6">
@@ -445,7 +701,6 @@ function EditModal({ data, onClose, onSave }) {
     );
 }
 // -----------------------------------------------------------------------------
-    
 
     // Placeholder para função de Relatório (Ação simulada)
     const handleGenerateReport = (type) => {
@@ -1582,4 +1837,5 @@ const App = () => {
 };
 
 export default App;
+
 
