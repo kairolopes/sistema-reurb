@@ -22,9 +22,9 @@ import {
     getDocs, 
     doc, 
     updateDoc,
-    deleteDoc, // ✅ FUNÇÃO DE EXCLUSÃO
+    deleteDoc, 
     where,
-    arrayUnion // ✅ FUNÇÃO PARA LOGS DE TICKET
+    arrayUnion 
 } from "firebase/firestore";
 import { setLogLevel } from "firebase/firestore";
 
@@ -40,7 +40,7 @@ const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__f
     messagingSenderId: "444345727490",
     appId: "1:444345727490:web:5d9e6dba923781ba91451b",
 };
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? initialAuthToken : null;
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
 // Inicialização de App e Services
 const app = initializeApp(firebaseConfig);
@@ -53,7 +53,6 @@ const getPublicCollection = (collectionName) => {
     // Assume que as regras de segurança permitem leitura/escrita para usuários autenticados
     return collection(db, `/artifacts/${appId}/public/data/${collectionName}`);
 };
-
 
 // =================================================================
 // 1. LÓGICA DE GERAÇÃO DE ID SEQUENCIAL
@@ -350,7 +349,242 @@ function EditModal({ data, onClose, onSave }) {
 
 
 // =================================================================
-// 3. COMPONENTE DE CONSULTA DE CADASTROS (COMPLETO E CORRIGIDO)
+// COMPONENTE DE DASHBOARD
+// =================================================================
+const KPI_Card = ({ title, value, unit, icon, color }) => (
+    <div className={`bg-white p-6 rounded-xl shadow-md border-l-4 ${color} transform hover:scale-105 transition duration-300`}>
+        <div className="flex items-center justify-between">
+            <div>
+                <p className="text-sm font-medium text-gray-500">{title}</p>
+                <p className="text-3xl font-bold text-gray-800 mt-1">{value} <span className="text-base font-normal text-gray-600">{unit}</span></p>
+            </div>
+            <div className={`text-3xl p-3 rounded-full ${color.replace('border-l-4', '').replace('hover:scale-105', 'bg-opacity-20')}`}>
+                {icon}
+            </div>
+        </div>
+    </div>
+);
+
+// Componente do Dashboard Principal
+const Dashboard = ({ municipios, loteamentos, allCadastros, loadingCadastros }) => {
+    
+    // --- LÓGICA DO DASHBOARD ---
+    
+    const totalCadastros = allCadastros.length;
+    const totalLoteamentos = loteamentos.length;
+    
+    const statusCounts = useMemo(() => {
+        const counts = {
+            'Assinado Gov.br': 0,
+            'Assinado Manual': 0,
+            'Pendente': 0,
+            'Revisão Necessária': 0,
+            'Concluído': 0,
+        };
+        allCadastros.forEach(c => {
+            const status = c.status_assinatura || 'Pendente';
+            counts[status] = (counts[status] || 0) + 1;
+        });
+        return counts;
+    }, [allCadastros]);
+
+    const cadastrosConcluidos = statusCounts['Assinado Gov.br'] + statusCounts['Assinado Manual'];
+    const taxaConclusao = totalCadastros > 0 ? ((cadastrosConcluidos / totalCadastros) * 100).toFixed(1) : 0;
+    
+    const pendencias = statusCounts['Pendente'] + statusCounts['Revisão Necessária'];
+    
+    // --- RENDERIZAÇÃO ---
+
+    if (loadingCadastros) {
+        return <div className="text-center p-8 text-xl text-sky-700">Carregando dados para o Dashboard...</div>;
+    }
+    
+    return (
+        <div className="bg-gray-50 p-8 rounded-2xl shadow-xl">
+            <h1 className="text-3xl font-extrabold text-sky-800 mb-8">Visão Geral do Projeto (Dashboard)</h1>
+
+            {/* Indicadores Chave (KPIs) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                <KPI_Card title="Total de Cadastros" value={totalCadastros} icon="👤" color="border-l-sky-500 bg-sky-50/50" />
+                <KPI_Card title="Taxa de Assinatura" value={taxaConclusao} unit="%" icon="✅" color="border-l-green-500 bg-green-50/50" />
+                <KPI_Card title="Pendências Críticas" value={pendencias} icon="⚠️" color="border-l-red-500 bg-red-50/50" />
+                <KPI_Card title="Núcleos Envolvidos" value={totalLoteamentos} icon="🧱" color="border-l-indigo-500 bg-indigo-50/50" />
+            </div>
+
+            {/* Gráfico de Status (Simulado com texto e barras) */}
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Status dos Processos</h2>
+                
+                {Object.keys(statusCounts).map(status => {
+                    const count = statusCounts[status];
+                    const percentage = totalCadastros > 0 ? ((count / totalCadastros) * 100).toFixed(1) : 0;
+                    let barColor = 'bg-gray-200';
+                    
+                    if (status.includes('Assinado')) barColor = 'bg-green-500';
+                    else if (status.includes('Pendente')) barColor = 'bg-red-500';
+                    else if (status.includes('Revisão')) barColor = 'bg-yellow-500';
+                    else if (status.includes('Concluído')) barColor = 'bg-blue-500';
+
+                    return (
+                        <div key={status} className="mb-4">
+                            <div className="flex justify-between text-sm font-medium text-gray-700">
+                                <span>{status}</span>
+                                <span>{count} ({percentage}%)</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                <div className={`${barColor} h-2.5 rounded-full transition-all duration-700`} style={{ width: `${percentage}%` }}></div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Alertas (Simulados) */}
+            <div className="bg-white p-6 rounded-xl shadow-lg mt-8">
+                <h2 className="text-xl font-bold text-red-700 mb-4 border-b pb-2">🚨 Alertas e Ações Imediatas</h2>
+                <ul className="list-disc ml-5 text-gray-700 space-y-2">
+                    <li>**{statusCounts['Revisão Necessária']} Cadastros** marcados para Revisão Manual (Verifique as pendências).</li>
+                    <li>**3 Cadastros (simulados)** estão pendentes de assinatura há mais de 60 dias.</li>
+                    <li>Verificação de duplicidade: **João Silva** possui dois cadastros ativos. Ação necessária: Unificar ou Excluir.</li>
+                </ul>
+            </div>
+        </div>
+    );
+};
+
+
+// =================================================================
+// COMPONENTE DE RELATÓRIOS
+// =================================================================
+
+const Relatorios = ({ municipios, loteamentos, allCadastros }) => {
+    const [reportType, setReportType] = useState('Completa');
+    const [filterMun, setFilterMun] = useState('');
+    const [filterLot, setFilterLot] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    
+    // Loteamentos filtrados pela seleção do município
+    const loteamentosFiltrados = useMemo(() => {
+        if (filterMun) {
+            return loteamentos.filter(l => l.id === filterMun);
+        }
+        return loteamentos;
+    }, [loteamentos, filterMun]);
+
+    const handleExport = () => {
+        setIsGenerating(true);
+        // Filtra os dados baseados nas seleções
+        let filteredData = allCadastros;
+        if (filterMun) {
+            filteredData = filteredData.filter(c => c.id_municipio_fk === filterMun);
+        }
+        if (filterLot) {
+            filteredData = filteredData.filter(c => c.id_loteamento_fk === filterLot);
+        }
+
+        if (filteredData.length === 0) {
+            alert("Nenhum dado para exportar com os filtros selecionados.");
+            setIsGenerating(false);
+            return;
+        }
+
+        // Mapeamento de campos para exportação CSV
+        const reportData = filteredData.map(c => ({
+            "ID Cadastro": c.numero_cadastro,
+            "Ocupante": c.nome,
+            "CPF Ocupante": c.cpf,
+            "Renda Familiar Total": parseFloat(c.renda_familiar_total || c.renda_mensal || 0).toFixed(2),
+            "Município ID": c.id_municipio_fk,
+            "Loteamento ID": c.id_loteamento_fk,
+            "Quadra/Lote": c.quadra_lote,
+            "Tipo REURB": c.tipo_reurb,
+            "Status Assinatura": c.status_assinatura,
+            "Data de Cadastro": c.createdAt ? new Date(c.createdAt.toDate()).toLocaleDateString('pt-BR') : 'N/A',
+        }));
+
+        // Geração do CSV
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + Object.keys(reportData[0]).join(";") + "\n"
+            + reportData.map(e => Object.values(e).join(";")).join("\n");
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Relatorio_REURB_${reportType}_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setIsGenerating(false);
+        alert(`Relatório '${reportType}' gerado com sucesso! Exportado ${filteredData.length} registros.`);
+    };
+
+    return (
+        <div className="bg-white p-8 rounded-2xl shadow-xl min-h-[calc(100vh-64px)]">
+            <h1 className="text-3xl font-extrabold text-sky-800 mb-6 border-b pb-4">Relatórios e Exportação de Dados</h1>
+            
+            <div className="space-y-6 p-6 border rounded-xl bg-gray-50">
+                <h2 className="text-xl font-bold text-gray-700">Filtros de Exportação</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Filtro Tipo de Relatório */}
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block mb-1">Tipo de Documento</label>
+                        <select
+                            value={reportType}
+                            onChange={(e) => setReportType(e.target.value)}
+                            className="w-full p-2.5 border rounded-lg"
+                        >
+                            <option value="Completa">Ficha Completa (Todos os Campos)</option>
+                            <option value="Renda">Análise de Renda Familiar</option>
+                            <option value="Status">Acompanhamento por Status</option>
+                        </select>
+                    </div>
+
+                    {/* Filtro Município */}
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block mb-1">Filtrar por Município</label>
+                        <select
+                            value={filterMun}
+                            onChange={(e) => {setFilterMun(e.target.value); setFilterLot('');}}
+                            className="w-full p-2.5 border rounded-lg"
+                        >
+                            <option value="">(Todos os Municípios)</option>
+                            {municipios.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
+                        </select>
+                    </div>
+
+                    {/* Filtro Loteamento */}
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 block mb-1">Filtrar por Loteamento</label>
+                        <select
+                            value={filterLot}
+                            onChange={(e) => setFilterLot(e.target.value)}
+                            className="w-full p-2.5 border rounded-lg"
+                            disabled={!filterMun}
+                        >
+                            <option value="">(Todos os Loteamentos)</option>
+                            {loteamentosFiltrados.map(l => <option key={l.id} value={l.id}>{l.nome_nucleo}</option>)}
+                        </select>
+                    </div>
+                </div>
+
+                <button
+                    onClick={handleExport}
+                    disabled={isGenerating}
+                    className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold disabled:bg-gray-400 mt-4"
+                >
+                    {isGenerating ? 'Gerando CSV...' : `Gerar Relatório de Exportação (CSV)`}
+                </button>
+                <p className="text-sm text-gray-500 text-center mt-3">Total de registros disponíveis: {allCadastros.length}</p>
+            </div>
+        </div>
+    );
+};
+
+
+// =================================================================
+// 3. COMPONENTE DE CONSULTA DE CADASTROS
 // =================================================================
 
 const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) => {
@@ -364,7 +598,7 @@ const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) =>
     const [filterLoteamento, setFilterLoteamento] = useState('');
     const [filterReurb, setFilterReurb] = useState('');
     
-    // ✅ ESTADOS PARA EDIÇÃO E MODAL (CORRIGIDO)
+    // ✅ ESTADOS PARA EDIÇÃO E MODAL
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedRegistration, setSelectedRegistration] = useState(null);
     
@@ -1802,4 +2036,3 @@ const App = () => {
 };
 
 export default App;
-
