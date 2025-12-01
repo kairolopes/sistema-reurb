@@ -22,7 +22,7 @@ import {
     getDocs, 
     doc, 
     updateDoc,
-    deleteDoc, // Adicionado deleteDoc
+    deleteDoc, // ✅ FUNÇÃO DE EXCLUSÃO IMPORTADA
     where
 } from "firebase/firestore";
 import { setLogLevel } from "firebase/firestore";
@@ -386,12 +386,15 @@ const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) =>
         }
     };
 
-    // 2. Exclui o cadastro
+    // 2. Exclui o cadastro (COM CONFIRMAÇÃO)
     const handleDelete = async (regId, regNome) => {
-        if (window.confirm(`Tem certeza que deseja EXCLUIR o cadastro de "${regNome}"? Esta ação é IRREVERSÍVEL.`)) {
+        // ✅ DIÁLOGO DE CONFIRMAÇÃO
+        if (window.confirm(`Tem certeza que deseja EXCLUIR o cadastro de "${regNome}"?\nEsta ação é IRREVERSÍVEL.`)) {
             try {
+                // Referência ao Documento e Exclusão no Firestore
                 await deleteDoc(doc(db, `/artifacts/${appId}/public/data/cadastros`, regId));
                 alert("Cadastro excluído com sucesso.");
+                // O onSnapshot cuida da atualização da lista
             } catch (e) {
                 console.error("Erro ao excluir o documento: ", e);
                 alert("Erro ao excluir o cadastro. Verifique as permissões.");
@@ -1079,7 +1082,7 @@ const Etapa4Result = ({ message, handleSendGovBrLink, handleManualUpload, setEta
         </div>
         
         <button onClick={() => setEtapa(1)} className="mt-8 text-sky-600 hover:underline">
-            Novo Cadastroooooo
+            Novo Cadastro
         </button>
     </div>
 );
@@ -1637,4 +1640,3 @@ const App = () => {
 };
 
 export default App;
-
