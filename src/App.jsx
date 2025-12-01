@@ -1801,7 +1801,132 @@ const Tickets = ({ allCadastros, handleSaveEdit }) => {
     );
 };
 
+// =================================================================
+// NOVO COMPONENTE: TELA DE CONFIGURAÇÕES (GERENCIAMENTO DE USUÁRIOS)
+// =================================================================
 
+const ConfigScreen = ({ userId, isAuthReady }) => {
+    const [registerEmail, setRegisterEmail] = useState('');
+    const [registerPassword, setRegisterPassword] = useState('');
+    const [registerName, setRegisterName] = useState('');
+    const [registerError, setRegisterError] = useState('');
+    const [registerMessage, setRegisterMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    // -----------------------------------------------------------
+    // LÓGICA: REGISTRAR NOVO USUÁRIO NO FIREBASE AUTH
+    // -----------------------------------------------------------
+    const handleRegisterUser = async (e) => {
+        e.preventDefault();
+        setRegisterError('');
+        setRegisterMessage('');
+        setIsLoading(true);
+
+        if (!registerEmail || !registerPassword || !registerName) {
+            setRegisterError("Preencha todos os campos.");
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            // 1. Cria a conta de usuário no Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, registerEmail, registerPassword);
+            const user = userCredential.user;
+            
+            // 2. Salva informações adicionais (Nome/Função) no Firestore 
+            //    (Opcional, mas útil para gestão de permissões)
+            await setDoc(doc(db, "users", user.uid), {
+                name: registerName,
+                email: user.email,
+                role: 'gestor', // Define a função padrão
+                createdAt: new Date(),
+                createdBy: userId
+            });
+
+            setRegisterMessage(`Usuário ${registerName} cadastrado com sucesso!`);
+            setRegisterEmail('');
+            setRegisterPassword('');
+            setRegisterName('');
+
+        } catch (error) {
+            console.error("Erro ao registrar:", error);
+            if (error.code === 'auth/email-already-in-use') {
+                setRegisterError('Este email já está em uso.');
+            } else if (error.code === 'auth/weak-password') {
+                setRegisterError('Senha deve ter no mínimo 6 caracteres.');
+            } else {
+                setRegisterError(`Falha ao cadastrar: ${error.message}`);
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    // --- RENDERIZAÇÃO DA TELA DE CONFIGURAÇÕES ---
+    return (
+        <div className="bg-white p-8 rounded-2xl shadow-xl min-h-[calc(100vh-64px)]">
+            <h1 className="text-3xl font-extrabold text-sky-800 mb-6 border-b pb-4">⚙️ Gerenciamento de Usuários</h1>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                {/* COLUNA 1: ADICIONAR NOVO USUÁRIO */}
+                <div className="bg-gray-50 p-6 rounded-xl shadow-inner">
+                    <h2 className="text-xl font-bold text-sky-700 mb-4">Adicionar Novo Acesso</h2>
+
+                    {registerError && <p className="bg-red-100 p-2 rounded text-red-700 mb-3">{registerError}</p>}
+                    {registerMessage && <p className="bg-green-100 p-2 rounded text-green-700 mb-3">{registerMessage}</p>}
+
+                    <form onSubmit={handleRegisterUser} className="space-y-4">
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 block">Nome Completo</label>
+                            <input type="text" value={registerName} onChange={(e) => setRegisterName(e.target.value)}
+                                className="w-full p-2 border rounded-lg" required />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 block">E-mail</label>
+                            <input type="email" value={registerEmail} onChange={(e) => setRegisterEmail(e.target.value)}
+                                className="w-full p-2 border rounded-lg" required />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 block">Senha Temporária</label>
+                            <input type="password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)}
+                                className="w-full p-2 border rounded-lg" required />
+                            <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres.</p>
+                        </div>
+
+                        <button type="submit" disabled={isLoading}
+                            className="w-full py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition disabled:bg-gray-400">
+                            {isLoading ? 'Registrando...' : 'Criar Novo Usuário'}
+                        </button>
+                    </form>
+                </div>
+
+                {/* COLUNA 2: LISTA DE USUÁRIOS (Simulada) */}
+                <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                    <h2 className="text-xl font-bold text-gray-700 mb-4">Usuários Ativos (Simulado)</h2>
+                    <p className="text-sm text-gray-500 mb-4">A lista real de usuários pode ser consultada no Console do Firebase (Authentication).</p>
+
+                    <ul className="space-y-3">
+                        <li className="p-3 bg-green-50 rounded flex justify-between items-center border-l-4 border-green-500">
+                            <div>
+                                <span className="font-semibold text-gray-800">Seu Usuário (Admin)</span>
+                                <span className="block text-xs text-green-600">admin@{firebaseConfig.projectId}.com</span>
+                            </div>
+                            <span className="text-xs px-2 py-0.5 bg-green-200 rounded-full">GESTOR</span>
+                        </li>
+                        <li className="p-3 bg-yellow-50 rounded flex justify-between items-center border-l-4 border-yellow-500">
+                            <div>
+                                <span className="font-semibold text-gray-800">Maria Silva</span>
+                                <span className="block text-xs text-gray-600">maria.s@email.com</span>
+                            </div>
+                            <span className="text-xs px-2 py-0.5 bg-yellow-200 rounded-full">ANALISTA</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // =================================================================
 // 5. COMPONENTE APP PRINCIPAL (CORRIGIDO)
@@ -2078,3 +2203,4 @@ const App = () => {
 };
 
 export default App;
+
