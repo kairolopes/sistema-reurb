@@ -111,6 +111,21 @@ const generateCadastroId = async (loteamentoId, municipios, loteamentos) => {
 
 
 // =================================================================
+// FUNÇÕES AUXILIARES GLOBAIS (CORREÇÃO DE ESCOPO PARA DASHBOARD/RELATÓRIOS)
+// =================================================================
+
+// Função auxiliar para obter o nome do loteamento (CORRIGIDO)
+const getLoteamentoNome = (loteamentos, id) => {
+    return loteamentos.find(l => l.id === id)?.nome_nucleo || 'N/A';
+};
+
+// Função auxiliar para obter o nome do município (CORRIGIDO)
+const getMunicipioNome = (municipios, id) => {
+    return municipios.find(m => m.id === id)?.nome || 'N/A';
+};
+
+
+// =================================================================
 // 2. COMPONENTE DE CADASTRO MESTRE (MODAL)
 // =================================================================
 
@@ -454,7 +469,7 @@ const Dashboard = ({ municipios, loteamentos, allCadastros, loadingCadastros }) 
 
 
 // =================================================================
-// COMPONENTE DE RELATÓRIOS (FINAL E CORRIGIDO)
+// COMPONENTE DE RELATÓRIOS
 // =================================================================
 
 const Relatorios = ({ municipios, loteamentos, allCadastros }) => {
@@ -530,8 +545,8 @@ const Relatorios = ({ municipios, loteamentos, allCadastros }) => {
         setIsGenerating(false);
         alert(`Relatório '${reportType}' gerado com sucesso! Exportado ${filteredData.length} registros.`);
     };
-    
-    // ✅ NOVO: Condição para aguardar o carregamento
+
+    // ✅ Condição para aguardar o carregamento
     if (isLoadingMasterData) {
         return (
             <div className="text-center p-8 text-xl text-sky-700">
@@ -818,7 +833,7 @@ const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) =>
                         value={filterMunicipio}
                         onChange={(e) => {
                             setFilterMunicipio(e.target.value);
-                            setFilterLoteamento(''); // Limpa o loteamento ao trocar o município
+                            setFilterLot(''); // Limpa o loteamento ao trocar o município
                         }}
                         className="p-3 border border-gray-300 rounded-lg"
                     >
@@ -906,7 +921,7 @@ const ConsultarCadastros = ({ municipios, loteamentos, userId, isAuthReady }) =>
                                         {c.nome} <span className="text-xs text-gray-500 block">({c.cpf})</span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                        <span className="font-medium">{getMunicipioNome(c.id_municipio_fk)} / {getLoteamentoNome(c.id_loteamento_fk)}</span>
+                                        <span className="font-medium">{getMunicipioNome(municipios, c.id_municipio_fk)} / {getLoteamentoNome(loteamentos, c.id_loteamento_fk)}</span>
                                         <span className="text-xs text-gray-400 block">{c.quadra_lote}</span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -2057,4 +2072,3 @@ const App = () => {
 };
 
 export default App;
-
