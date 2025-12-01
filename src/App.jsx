@@ -11,7 +11,8 @@ import {
     sendPasswordResetEmail, 
     signOut, 
     signInAnonymously,
-    signInWithCustomToken 
+    signInWithCustomToken,
+    createUserWithEmailAndPassword // ✅ NOVO: Para criar novos usuários
 } from "firebase/auth";
 import { 
     getFirestore, 
@@ -484,7 +485,7 @@ const Relatorios = ({ municipios, loteamentos, allCadastros }) => {
     // Loteamentos filtrados pela seleção do município
     const loteamentosFiltrados = useMemo(() => {
         if (filterMun) {
-            // ✅ CORREÇÃO: Compara o ID do município selecionado (filterMun) 
+            // ✅ CORRIGIDO: Compara o ID do município selecionado (filterMun) 
             // com o campo de REFERÊNCIA DO MUNICÍPIO no loteamento (l.id_municipio_fk)
             return loteamentos.filter(l => l.id_municipio_fk === filterMun); 
         }
@@ -2066,7 +2067,10 @@ const App = () => {
                     allCadastros={allCadastros} 
                 />}
                 
-                {page === "config" && <PagePlaceholder title="Configurações" />}
+                {page === "config" && <ConfigScreen 
+                    userId={userId} 
+                    isAuthReady={isAuthReady}
+                />}
             </main>
             
         </div>
@@ -2074,4 +2078,3 @@ const App = () => {
 };
 
 export default App;
-
