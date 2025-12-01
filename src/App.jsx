@@ -454,7 +454,7 @@ const Dashboard = ({ municipios, loteamentos, allCadastros, loadingCadastros }) 
 
 
 // =================================================================
-// COMPONENTE DE RELATÓRIOS
+// COMPONENTE DE RELATÓRIOS (FINAL E CORRIGIDO)
 // =================================================================
 
 const Relatorios = ({ municipios, loteamentos, allCadastros }) => {
@@ -463,6 +463,9 @@ const Relatorios = ({ municipios, loteamentos, allCadastros }) => {
     const [filterLot, setFilterLot] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     
+    // ✅ NOVO: Verifica se os dados mestres (municípios/loteamentos) estão carregados
+    const isLoadingMasterData = municipios.length === 0 || loteamentos.length === 0;
+
     // Loteamentos filtrados pela seleção do município
     const loteamentosFiltrados = useMemo(() => {
         if (filterMun) {
@@ -473,6 +476,14 @@ const Relatorios = ({ municipios, loteamentos, allCadastros }) => {
 
     const handleExport = () => {
         setIsGenerating(true);
+
+        // 1. Cria mapas de busca rápida (ID -> Nome)
+        const municipioMap = new Map();
+        municipios.forEach(m => municipioMap.set(m.id, m.nome));
+
+        const loteamentoMap = new Map();
+        loteamentos.forEach(l => loteamentoMap.set(l.id, l.nome_nucleo));
+
         // Filtra os dados baseados nas seleções
         let filteredData = allCadastros;
         if (filterMun) {
@@ -488,21 +499,22 @@ const Relatorios = ({ municipios, loteamentos, allCadastros }) => {
             return;
         }
 
-        // Mapeamento de campos para exportação CSV
+        // 2. Mapeamento de campos para exportação CSV (CORRIGIDO PARA MOSTRAR NOMES)
         const reportData = filteredData.map(c => ({
             "ID Cadastro": c.numero_cadastro,
             "Ocupante": c.nome,
             "CPF Ocupante": c.cpf,
             "Renda Familiar Total": parseFloat(c.renda_familiar_total || c.renda_mensal || 0).toFixed(2),
-            "Município ID": c.id_municipio_fk,
-            "Loteamento ID": c.id_loteamento_fk,
+            // ✅ CORREÇÃO: Usa o nome em vez do ID interno
+            "Município": municipioMap.get(c.id_municipio_fk) || 'ID Não Encontrado',
+            "Núcleo Urbano": loteamentoMap.get(c.id_loteamento_fk) || 'ID Não Encontrado',
             "Quadra/Lote": c.quadra_lote,
             "Tipo REURB": c.tipo_reurb,
             "Status Assinatura": c.status_assinatura,
             "Data de Cadastro": c.createdAt ? new Date(c.createdAt.toDate()).toLocaleDateString('pt-BR') : 'N/A',
         }));
 
-        // Geração do CSV
+        // Geração do CSV (MANTIDA)
         const csvContent = "data:text/csv;charset=utf-8," 
             + Object.keys(reportData[0]).join(";") + "\n"
             + reportData.map(e => Object.values(e).join(";")).join("\n");
@@ -518,6 +530,15 @@ const Relatorios = ({ municipios, loteamentos, allCadastros }) => {
         setIsGenerating(false);
         alert(`Relatório '${reportType}' gerado com sucesso! Exportado ${filteredData.length} registros.`);
     };
+    
+    // ✅ NOVO: Condição para aguardar o carregamento
+    if (isLoadingMasterData) {
+        return (
+            <div className="text-center p-8 text-xl text-sky-700">
+                Aguarde... Carregando dados mestres (Municípios e Loteamentos) para o filtro.
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white p-8 rounded-2xl shadow-xl min-h-[calc(100vh-64px)]">
@@ -2036,3 +2057,4 @@ const App = () => {
 };
 
 export default App;
+
