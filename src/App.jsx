@@ -484,7 +484,9 @@ const Relatorios = ({ municipios, loteamentos, allCadastros }) => {
     // Loteamentos filtrados pela seleção do município
     const loteamentosFiltrados = useMemo(() => {
         if (filterMun) {
-            return loteamentos.filter(l => l.id === filterMun);
+            // ✅ CORREÇÃO: Compara o ID do município selecionado (filterMun) 
+            // com o campo de REFERÊNCIA DO MUNICÍPIO no loteamento (l.id_municipio_fk)
+            return loteamentos.filter(l => l.id_municipio_fk === filterMun); 
         }
         return loteamentos;
     }, [loteamentos, filterMun]);
@@ -2072,3 +2074,4 @@ const App = () => {
 };
 
 export default App;
+
