@@ -1079,7 +1079,7 @@ const Etapa4Result = ({ message, handleSendGovBrLink, handleManualUpload, setEta
         </div>
         
         <button onClick={() => setEtapa(1)} className="mt-8 text-sky-600 hover:underline">
-            Novo Cadastro
+            Novo Cadastroooooo
         </button>
     </div>
 );
@@ -1637,3 +1637,4 @@ const App = () => {
 };
 
 export default App;
+
